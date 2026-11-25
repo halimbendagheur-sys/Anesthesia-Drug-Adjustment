@@ -1,0 +1,2911 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f766e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Anesthésie">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+
+  <title>Feuille de calcul d'anesthésie — SFAR & MAPAR</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Cairo', 'sans-serif'],
+            arabic: ['Cairo', 'Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', 'Cairo', sans-serif;
+    }
+    html[dir="rtl"] body {
+      font-family: 'Cairo', 'Inter', sans-serif;
+    }
+    .ltr-num {
+      direction: ltr;
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 9999px; }
+
+    @media print {
+      body * { visibility: hidden; }
+      #printable-protocol, #printable-protocol * { visibility: visible; }
+      #printable-protocol {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-200 min-h-screen pb-16">
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="sticky top-0 z-40 bg-slate-900 text-white border-b border-slate-800 shadow-md no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand & Dynamic Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-white shadow-md shrink-0">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+        </div>
+        <div>
+          <h1 id="ui-app-title" class="text-base sm:text-xl font-extrabold text-white leading-tight">
+            Feuille de calcul d'anesthésie
+          </h1>
+          <p id="ui-app-subtitle" class="text-[11px] sm:text-xs text-slate-300">
+            Calculateur PK (TBW/IBW/LBW/ABW), Terrains SFAR, Voies Aériennes & MAPAR
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Controls -->
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- MAPAR Pre-op Management Button -->
+        <button type="button" data-action="open-modal" data-modal="maparModal" id="ui-btn-mapar"
+          class="px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-extrabold text-xs shadow-sm flex items-center gap-1.5 transition cursor-pointer">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          <span id="ui-btn-mapar-text">GESTION DE TRAITEMENT EN Pré opératoire (MAPAR)</span>
+        </button>
+
+        <!-- Language Switcher -->
+        <div id="lang-switcher" class="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700" role="group" aria-label="Language">
+          <button type="button" data-lang="fr" class="lang-btn px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-600 text-white shadow-sm transition cursor-pointer">FR</button>
+          <button type="button" data-lang="ar" class="lang-btn px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-700 transition cursor-pointer">العربية</button>
+          <button type="button" data-lang="en" class="lang-btn px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-700 transition cursor-pointer">EN</button>
+          <button type="button" data-lang="dz" class="lang-btn px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-700 transition cursor-pointer">الدارجة DZ</button>
+        </div>
+
+        <!-- Dark Mode Toggle -->
+        <button type="button" data-action="toggle-theme" class="p-2 rounded-xl bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition cursor-pointer" title="Mode Sombre / Clair">
+          <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+
+    <!-- QUICK PATIENT PRESETS BAR -->
+    <section class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-3.5 no-print">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span id="ui-presets-lbl" class="text-xs font-extrabold text-slate-600 dark:text-slate-300">
+          Profils cliniques rapides (Tests) :
+        </span>
+        <div id="preset-buttons-bar" class="flex flex-wrap items-center gap-1.5">
+          <button type="button" data-preset="neonate" id="ui-preset-neo" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-teal-600 hover:text-white text-xs font-bold transition cursor-pointer">Nouveau-né (3.4kg)</button>
+          <button type="button" data-preset="child" id="ui-preset-child" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-teal-600 hover:text-white text-xs font-bold transition cursor-pointer">Enfant (5 ans)</button>
+          <button type="button" data-preset="adult" id="ui-preset-adult" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-teal-600 hover:text-white text-xs font-bold transition cursor-pointer">Adulte Standard (75kg)</button>
+          <button type="button" data-preset="obese" id="ui-preset-obese" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-teal-600 hover:text-white text-xs font-bold transition cursor-pointer">Obèse Morbide (135kg)</button>
+          <button type="button" data-preset="elderly" id="ui-preset-old" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-teal-600 hover:text-white text-xs font-bold transition cursor-pointer">Sujet Âgé + IR</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 1: PATIENT DEMOGRAPHICS & ORGAN FUNCTION -->
+    <section class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 sm:p-6 no-print">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <span class="w-7 h-7 rounded-lg bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 font-bold flex items-center justify-center text-sm">1</span>
+          <h2 id="ui-sec1-title" class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Paramètres Anthropométriques & Terrain Clinique</h2>
+        </div>
+        <span id="ageCategoryBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800 dark:bg-teal-900/60 dark:text-teal-200">
+          Adulte
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Age -->
+        <div class="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-700/70">
+          <label for="ageValue" id="ui-lbl-age" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">Âge du patient</label>
+          <div class="flex gap-2">
+            <input type="number" id="ageValue" value="40" min="0" max="120" step="0.5"
+              class="w-1/2 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 font-bold text-base focus:ring-2 focus:ring-teal-500 outline-none ltr-num text-center" />
+            <select id="ageUnit"
+              class="w-1/2 px-2.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 font-semibold text-sm focus:ring-2 focus:ring-teal-500 outline-none">
+              <option value="years" selected id="ui-unit-years">Ans</option>
+              <option value="months" id="ui-unit-months">Mois</option>
+              <option value="days" id="ui-unit-days">Jours</option>
+              <option value="weeks_ga" id="ui-unit-weeks">Semaines SA (Préma)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Sex -->
+        <div class="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-700/70">
+          <label id="ui-lbl-sex" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">Sexe</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="cursor-pointer">
+              <input type="radio" name="sex" value="M" checked class="peer sr-only" />
+              <div id="ui-sex-m" class="py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-center font-bold text-sm peer-checked:bg-teal-600 peer-checked:text-white peer-checked:border-teal-600 transition">
+                Homme (H)
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="sex" value="F" class="peer sr-only" />
+              <div id="ui-sex-f" class="py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-center font-bold text-sm peer-checked:bg-teal-600 peer-checked:text-white peer-checked:border-teal-600 transition">
+                Femme (F)
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Actual Weight -->
+        <div class="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-700/70">
+          <label for="actualWeight" id="ui-lbl-wt" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">Poids Réel (TBW - kg)</label>
+          <div class="relative">
+            <input type="number" id="actualWeight" value="75" min="0.4" max="350" step="0.1"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 font-bold text-base focus:ring-2 focus:ring-teal-500 outline-none ltr-num text-center" />
+            <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">kg</span>
+          </div>
+        </div>
+
+        <!-- Height -->
+        <div class="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-700/70">
+          <label for="heightCm" id="ui-lbl-ht" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">Taille (cm)</label>
+          <div class="relative">
+            <input type="number" id="heightCm" value="175" min="25" max="230" step="1"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 font-bold text-base focus:ring-2 focus:ring-teal-500 outline-none ltr-num text-center" />
+            <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">cm</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Organ Function -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <!-- Renal -->
+        <div class="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-700/70">
+          <label for="renalStatus" id="ui-lbl-renal" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">Fonction Rénale (DFG)</label>
+          <select id="renalStatus"
+            class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 font-semibold text-sm focus:ring-2 focus:ring-teal-500 outline-none">
+            <option value="normal" selected id="ui-renal-norm">Normale (DFG > 60 mL/min)</option>
+            <option value="moderate" id="ui-renal-mod">Insuffisance Rénale Modérée (30-60)</option>
+            <option value="severe" id="ui-renal-sev">Insuffisance Rénale Sévère (< 30 / Dialyse)</option>
+          </select>
+        </div>
+
+        <!-- Hepatic -->
+        <div class="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-700/70">
+          <label for="hepaticStatus" id="ui-lbl-hepatic" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">Fonction Hépatique</label>
+          <select id="hepaticStatus"
+            class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 font-semibold text-sm focus:ring-2 focus:ring-teal-500 outline-none">
+            <option value="normal" selected id="ui-hep-norm">Normale (Child-Pugh A)</option>
+            <option value="moderate" id="ui-hep-mod">Insuffisance Hépatique Modérée (Child B)</option>
+            <option value="severe" id="ui-hep-sev">Insuffisance Hépatique Sévère (Child C)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Multi-Select Terrain & Clinical Contexts (SFAR) -->
+      <div class="mt-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200/70 dark:border-slate-700/70">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+          <label id="ui-lbl-ctx" class="text-xs font-extrabold text-slate-700 dark:text-slate-200">
+            Terrain Clinique & Risques Spécifiques (Recommandations SFAR — Sélection multiple) :
+          </label>
+          <button type="button" data-action="clear-terrains" id="ui-btn-clear-terrain" class="text-xs font-bold text-teal-700 dark:text-teal-300 hover:underline cursor-pointer">
+            Réinitialiser (Standard)
+          </button>
+        </div>
+        <div id="terrainPillsContainer" class="flex flex-wrap gap-2"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: PK WEIGHTS & CLINICAL RECOMMENDATION -->
+    <section class="space-y-4">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+        <!-- BMI -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div class="flex items-center justify-between mb-1">
+            <span id="ui-card-bmi-lbl" class="text-xs font-bold text-slate-500 dark:text-slate-400">Indice Masse Corp.</span>
+            <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">IMC</span>
+          </div>
+          <div class="text-2xl font-extrabold text-slate-900 dark:text-white ltr-num" id="resBMI">24.5</div>
+          <div class="text-xs font-semibold mt-1" id="resBMIClass">Normal</div>
+        </div>
+
+        <!-- TBW -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border-2 border-blue-500/30 dark:border-blue-500/40 shadow-sm">
+          <div class="flex items-center justify-between mb-1">
+            <span id="ui-card-tbw-lbl" class="text-xs font-bold text-blue-700 dark:text-blue-300">Poids Réel</span>
+            <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200">TBW</span>
+          </div>
+          <div class="text-2xl font-extrabold text-blue-700 dark:text-blue-300 ltr-num" id="resTBW">75.0 kg</div>
+          <div id="ui-card-tbw-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Célocurine®, Bridion®</div>
+        </div>
+
+        <!-- IBW -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border-2 border-emerald-500/30 dark:border-emerald-500/40 shadow-sm">
+          <div class="flex items-center justify-between mb-1">
+            <span id="ui-card-ibw-lbl" class="text-xs font-bold text-emerald-700 dark:text-emerald-300">Poids Idéal</span>
+            <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200">IBW</span>
+          </div>
+          <div class="text-2xl font-extrabold text-emerald-700 dark:text-emerald-300 ltr-num" id="resIBW">70.6 kg</div>
+          <div id="ui-card-ibw-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Ventilation (VT), Curares, AL</div>
+        </div>
+
+        <!-- LBW -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border-2 border-purple-500/30 dark:border-purple-500/40 shadow-sm">
+          <div class="flex items-center justify-between mb-1">
+            <span id="ui-card-lbw-lbl" class="text-xs font-bold text-purple-700 dark:text-purple-300">Poids Maigre</span>
+            <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200">LBW</span>
+          </div>
+          <div class="text-2xl font-extrabold text-purple-700 dark:text-purple-300 ltr-num" id="resLBW">58.2 kg</div>
+          <div id="ui-card-lbw-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Induction Propofol, Opioïdes</div>
+        </div>
+
+        <!-- ABW -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border-2 border-amber-500/30 dark:border-amber-500/40 shadow-sm col-span-2 sm:col-span-1">
+          <div class="flex items-center justify-between mb-1">
+            <span id="ui-card-abw-lbl" class="text-xs font-bold text-amber-700 dark:text-amber-300">Poids Ajusté</span>
+            <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200">ABW</span>
+          </div>
+          <div class="text-2xl font-extrabold text-amber-700 dark:text-amber-300 ltr-num" id="resABW">72.4 kg</div>
+          <div id="ui-card-abw-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">IBW + 0.4×(TBW−IBW)</div>
+        </div>
+      </div>
+
+      <!-- Smart Clinical Advice Box -->
+      <div class="bg-gradient-to-r from-teal-50 via-cyan-50 to-white dark:from-teal-950/60 dark:via-slate-900 dark:to-slate-900 border border-teal-200 dark:border-teal-800/80 rounded-2xl p-4 sm:p-5 shadow-sm">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          </div>
+          <div class="space-y-2 flex-1">
+            <h3 id="ui-advice-title" class="font-extrabold text-teal-900 dark:text-teal-200 text-base">
+              Conseil Pratique & Stratégie Anesthésique Optimale pour ce Patient
+            </h3>
+            <div id="clinicalAdviceList" class="text-sm text-slate-700 dark:text-slate-300 space-y-1.5 leading-relaxed"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: AIRWAY & VENTILATION -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Airway Card -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
+        <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <span class="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-bold flex items-center justify-center text-sm">2</span>
+          <h2 id="ui-sec2-title" class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Intubation Endotrachéale & Voies Aériennes</h2>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <!-- ETT Cuffed -->
+          <div class="p-3.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-800/50">
+            <div id="ui-ett-cuffed-lbl" class="text-xs font-bold text-indigo-800 dark:text-indigo-300">Sonde AVEC ballonnet (DI)</div>
+            <div class="text-2xl font-extrabold text-indigo-950 dark:text-white mt-1 ltr-num" id="ettCuffed">7.5 mm</div>
+            <div class="text-xs text-slate-600 dark:text-slate-400 mt-1" id="ettBackup">Réserve : 7.0 et 8.0 mm</div>
+          </div>
+
+          <!-- Depth & Uncuffed -->
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+            <div id="ui-ett-depth-lbl" class="text-xs font-bold text-slate-600 dark:text-slate-300">Repère fixation aux arcades</div>
+            <div class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1 ltr-num" id="ettDepth">22 cm</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="ettUncuffedNote">Sans ballonnet : —</div>
+          </div>
+
+          <!-- Guedel -->
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between gap-1">
+              <span id="ui-guedel-lbl" class="text-xs font-bold text-slate-600 dark:text-slate-300">Canule de Guedel</span>
+              <span id="guedelColorBadge" class="px-2 py-0.5 rounded text-[11px] font-bold bg-red-600 text-white">Rouge (4)</span>
+            </div>
+            <div class="text-base font-extrabold text-slate-900 dark:text-white mt-1" id="guedelSizeText">Taille 4 — 90 mm</div>
+            <div id="ui-guedel-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Mesure : commissure labiale → angle mandibule</div>
+          </div>
+
+          <!-- LMA & Blade -->
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+            <div id="ui-lma-lbl" class="text-xs font-bold text-slate-600 dark:text-slate-300">Masque Laryngé (ML) & Lame</div>
+            <div class="text-base font-extrabold text-slate-900 dark:text-white mt-1" id="lmaSize">ML Taille 4</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" id="bladeSize">Lame Macintosh n°3 ou 4</div>
+          </div>
+        </div>
+
+        <div class="mt-3 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-800/50 text-xs text-amber-900 dark:text-amber-200">
+          <strong id="ui-cuff-warn-lbl">Sécurité :</strong>
+          <span id="cuffPressureText">Pression ballonnet 20-30 cmH₂O + vérification EtCO₂ et auscultation bilatérale.</span>
+        </div>
+      </div>
+
+      <!-- Ventilator & Fluid Therapy Card -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 font-bold flex items-center justify-center text-sm">3</span>
+            <h2 id="ui-sec3-title" class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Paramètres Ventilateur & Hydratation</h2>
+          </div>
+          <span id="ui-vt-ibw-badge" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200">VT calculé sur IBW</span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <!-- VT -->
+          <div class="p-3 rounded-xl bg-cyan-50/80 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800/60 text-center">
+            <div id="ui-vent-vt-lbl" class="text-xs font-bold text-cyan-800 dark:text-cyan-300">Volume Courant (VT)</div>
+            <div class="text-xl font-extrabold text-cyan-950 dark:text-white mt-1 ltr-num" id="ventVT">495 mL</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 ltr-num" id="ventVTRange">(425 - 565 mL)</div>
+          </div>
+
+          <!-- FR -->
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center">
+            <div id="ui-vent-fr-lbl" class="text-xs font-bold text-slate-600 dark:text-slate-300">Fréquence (FR)</div>
+            <div class="text-xl font-extrabold text-slate-900 dark:text-white mt-1 ltr-num" id="ventFR">14 c/min</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400" id="ventFRRange">12 - 16 /min</div>
+          </div>
+
+          <!-- PEP -->
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center">
+            <div id="ui-vent-pep-lbl" class="text-xs font-bold text-slate-600 dark:text-slate-300">PEP (PEEP)</div>
+            <div class="text-xl font-extrabold text-slate-900 dark:text-white mt-1 ltr-num" id="ventPEP">5 cmH₂O</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400" id="ventPEPNote">Protectrice</div>
+          </div>
+
+          <!-- Temps I/E -->
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center">
+            <div id="ui-vent-ie-lbl" class="text-xs font-bold text-slate-600 dark:text-slate-300">Temps I/E</div>
+            <div class="text-xl font-extrabold text-slate-900 dark:text-white mt-1 ltr-num" id="ventIE">1 : 2</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 ltr-num">EtCO₂: 35-40 mmHg</div>
+          </div>
+        </div>
+
+        <!-- Fluid Therapy -->
+        <div class="mt-3.5 p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/70 dark:border-blue-800/50 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex-1 min-w-[200px]">
+            <div id="ui-fluid-lbl" class="text-xs font-bold text-blue-900 dark:text-blue-200">Débit d'entretien IV (Règle 4-2-1 SFAR/ADARPEF) :</div>
+            <div class="text-xs text-slate-600 dark:text-slate-300 mt-0.5" id="fluidTypeRec">Soluté recommandé : Cristalloïde isotonique balancé (Ringer Lactate / Isofundine®).</div>
+          </div>
+          <div class="text-xl font-extrabold text-blue-800 dark:text-blue-300 ltr-num bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800" id="fluidRate">
+            115 mL/h
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: DRUG SELECTION & PHARMACOKINETIC DOSING -->
+    <section id="drugs-section" class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 sm:p-6">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <span class="w-7 h-7 rounded-lg bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 font-bold flex items-center justify-center text-sm">4</span>
+          <div>
+            <h2 id="ui-sec4-title" class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Sélection des Médicaments & Posologies Selon Propriétés Physico-Chimiques</h2>
+            <p id="ui-sec4-sub" class="text-xs text-slate-500 dark:text-slate-400">Cochez les molécules souhaitées dans chaque classe pour générer le protocole opératoire</p>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div id="drug-tabs-bar" class="flex flex-wrap gap-1.5 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl no-print">
+          <button type="button" data-tab="induction" id="tab-induction" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-600 text-white shadow-sm transition cursor-pointer">
+            1. Induction
+          </button>
+          <button type="button" data-tab="maintenance" id="tab-maintenance" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer">
+            2. Entretien (Maintenance)
+          </button>
+          <button type="button" data-tab="local" id="tab-local" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer">
+            3. Anesthésiques Locaux
+          </button>
+          <button type="button" data-tab="emergency" id="tab-emergency" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer">
+            4. Urgence & Antidotes
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 1: INDUCTION -->
+      <div id="panel-induction" class="tab-panel space-y-6">
+        <div>
+          <h3 id="ui-cat-hyp" class="text-sm font-extrabold text-teal-800 dark:text-teal-300 mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+            Hypnotiques Intraveineux (Induction)
+          </h3>
+          <div id="grid-ind-hypnotics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
+        </div>
+
+        <div>
+          <h3 id="ui-cat-opi" class="text-sm font-extrabold text-blue-800 dark:text-blue-300 mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            Analgésiques Opioïdes (Induction)
+          </h3>
+          <div id="grid-ind-opioids" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5"></div>
+        </div>
+
+        <div>
+          <h3 id="ui-cat-cur" class="text-sm font-extrabold text-purple-800 dark:text-purple-300 mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+            Curares / Myorelaxants (Intubation)
+          </h3>
+          <div id="grid-ind-curares" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
+        </div>
+      </div>
+
+      <!-- TAB 2: MAINTENANCE -->
+      <div id="panel-maintenance" class="tab-panel hidden space-y-6">
+        <div>
+          <h3 id="ui-cat-vol" class="text-sm font-extrabold text-cyan-800 dark:text-cyan-300 mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
+            Anesthésiques par Inhalation (Gaz & Volatils — MAC ajustée à l'âge selon Mapleson)
+          </h3>
+          <div id="grid-maint-volatiles" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5"></div>
+        </div>
+
+        <div>
+          <h3 id="ui-cat-tiva" class="text-sm font-extrabold text-teal-800 dark:text-teal-300 mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+            Entretien Intraveineux (AIVOC / PSE & Réinjections)
+          </h3>
+          <div id="grid-maint-iv" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: LOCAL ANESTHETICS -->
+      <div id="panel-local" class="tab-panel hidden space-y-4">
+        <div id="ui-local-banner" class="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-900 dark:text-amber-200">
+          Sécurité Pharmacocinétique : Les doses maximales toxiques des anesthésiques locaux sont calculées sur le Poids Idéal (IBW) pour prévenir la toxicité systémique (LAST). Antidote immédiat : Intralipide 20%®.
+        </div>
+        <div id="grid-local-anesthetics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
+      </div>
+
+      <!-- TAB 4: EMERGENCY & ANTIDOTES -->
+      <div id="panel-emergency" class="tab-panel hidden space-y-6">
+        <div>
+          <h3 id="ui-cat-cardio" class="text-sm font-extrabold text-rose-700 dark:text-rose-400 mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+            Médicaments Cardiovasculaires & Réanimation (ACR / Choc)
+          </h3>
+          <div id="grid-emerg-cardio" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
+        </div>
+
+        <div>
+          <h3 id="ui-cat-antidote" class="text-sm font-extrabold text-amber-700 dark:text-amber-400 mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            Antidotes & Décurarisation
+          </h3>
+          <div id="grid-emerg-antidotes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
+        </div>
+
+        <div>
+          <h3 id="ui-cat-other" class="text-sm font-extrabold text-indigo-700 dark:text-indigo-400 mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            Autres Molécules Essentielles du Chariot d'Urgence
+          </h3>
+          <div id="grid-emerg-other" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 5: PROTOCOL SUMMARY -->
+    <section id="printable-protocol" class="bg-white dark:bg-slate-900 rounded-2xl shadow-md border-2 border-teal-600/40 dark:border-teal-500/40 p-5 sm:p-6">
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold shadow shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          </div>
+          <div>
+            <h2 id="ui-sec5-title" class="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white">Résumé du Protocole Anesthésique Prêt à Appliquer</h2>
+            <p id="ui-sec5-sub" class="text-xs text-slate-500 dark:text-slate-400">Feuille de route personnalisée générée selon les paramètres et médicaments sélectionnés</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 no-print">
+          <button type="button" data-action="select-default-drugs" id="ui-btn-reset-drugs" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition cursor-pointer">
+            Protocole Standard
+          </button>
+          <button type="button" data-action="clear-all-drugs" id="ui-btn-clear-drugs" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950 text-rose-700 dark:text-rose-300 font-bold text-xs transition cursor-pointer">
+            Tout décocher
+          </button>
+          <button type="button" data-action="copy-protocol" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span id="ui-btn-copy">Copier le protocole</span>
+          </button>
+          <button type="button" data-action="print-protocol" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            <span id="ui-btn-print">Imprimer / PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="protocolSummaryContainer" class="space-y-4 text-sm"></div>
+    </section>
+
+    <!-- FOOTER WITH ABOUT US BUTTON -->
+    <footer class="pt-4 pb-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400 no-print">
+      <div id="ui-footer-note">
+        Outil d'aide à la décision clinique basé sur les référentiels SFAR, ADARPEF, ERC & MAPAR. Vérifier toujours les dilutions.
+      </div>
+      <button type="button" data-action="open-modal" data-modal="aboutModal" id="ui-btn-aboutus"
+        class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs shadow-sm flex items-center gap-2 transition cursor-pointer">
+        <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>About Us</span>
+      </button>
+    </footer>
+
+  </main>
+
+  <!-- MODAL 1: GESTION DE TRAITEMENT EN PRÉ OPÉRATOIRE (MAPAR) -->
+  <div id="maparModal" data-backdrop="maparModal" class="fixed inset-0 z-50 hidden bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 no-print">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-5 py-4 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 flex items-center justify-between gap-3 shrink-0">
+        <div>
+          <h3 id="ui-mapar-modal-title" class="text-base sm:text-lg font-extrabold leading-tight">
+            GESTION DE TRAITEMENT EN Pré opératoire (Source : MAPAR / SFAR / GIHP)
+          </h3>
+          <p id="ui-mapar-modal-sub" class="text-xs font-semibold text-slate-900/80">
+            Conduite à tenir, délais d'arrêt préopératoire, relais et reprise postopératoire
+          </p>
+        </div>
+        <button type="button" data-action="close-modal" data-modal="maparModal" class="p-2 rounded-xl bg-slate-950/15 hover:bg-slate-950/25 text-slate-950 font-bold transition cursor-pointer" aria-label="Fermer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Search & Category Filter Pills -->
+      <div class="p-4 bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 space-y-3 shrink-0">
+        <input type="text" id="maparSearchInput" placeholder="Rechercher un médicament (ex: Eliquis, Plavix, Metformine, Ramipril, Kardégic, Ozempic...)"
+          class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs sm:text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none" />
+        <div id="mapar-filter-pills" class="flex flex-wrap gap-1.5">
+          <button type="button" data-mapar-cat="all" class="mapar-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-slate-950 shadow-sm cursor-pointer">Tous</button>
+          <button type="button" data-mapar-cat="anticoag" class="mapar-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 cursor-pointer">Anticoagulants (AOD / AVK)</button>
+          <button type="button" data-mapar-cat="aap" class="mapar-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 cursor-pointer">Antiagrégants (AAP)</button>
+          <button type="button" data-mapar-cat="cv" class="mapar-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 cursor-pointer">Cardiovasculaire (IEC / ARA2 / BB)</button>
+          <button type="button" data-mapar-cat="diab" class="mapar-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 cursor-pointer">Antidiabétiques (Metformine / iSGLT2 / GLP-1)</button>
+          <button type="button" data-mapar-cat="neuro" class="mapar-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 cursor-pointer">Psychotropes & Corticoïdes</button>
+        </div>
+      </div>
+
+      <!-- Table Content -->
+      <div class="overflow-y-auto p-4 flex-1">
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-start border-collapse text-xs">
+            <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-extrabold uppercase">
+              <tr>
+                <th id="ui-th-class" class="p-3 text-start border-b border-slate-200 dark:border-slate-700">Classe</th>
+                <th id="ui-th-drug" class="p-3 text-start border-b border-slate-200 dark:border-slate-700">DCI / Noms Commerciaux</th>
+                <th id="ui-th-stop" class="p-3 text-start border-b border-slate-200 dark:border-slate-700">Arrêt Préopératoire (MAPAR)</th>
+                <th id="ui-th-cat" class="p-3 text-start border-b border-slate-200 dark:border-slate-700">Conduite à tenir / Relais / Reprise</th>
+              </tr>
+            </thead>
+            <tbody id="maparTableBody" class="divide-y divide-slate-200 dark:divide-slate-800"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-5 py-3 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex justify-end shrink-0">
+        <button type="button" data-action="close-modal" data-modal="maparModal" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition cursor-pointer">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: ABOUT US -->
+  <div id="aboutModal" data-backdrop="aboutModal" class="fixed inset-0 z-50 hidden bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden text-center">
+      <div class="bg-gradient-to-br from-teal-600 to-cyan-700 p-6 text-white relative">
+        <button type="button" data-action="close-modal" data-modal="aboutModal" class="absolute top-3 right-3 p-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white transition cursor-pointer" aria-label="Fermer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <div class="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-md mx-auto flex items-center justify-center mb-3 border border-white/25 shadow-lg">
+          <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <h3 class="text-xl font-extrabold tracking-tight">Dr BENDAGHEUR ABDELHALIM</h3>
+        <p class="text-sm font-bold text-teal-100 mt-1">Rea-Anesthesie</p>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2 text-sm font-bold text-slate-800 dark:text-slate-200">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-teal-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            <span>Gmail: <span class="text-teal-600 dark:text-teal-400 ltr-num">gtafandz@gmail.com</span></span>
+          </div>
+          <button type="button" data-action="copy-email" class="px-2.5 py-1 rounded-lg bg-teal-100 dark:bg-teal-900/50 text-teal-800 dark:text-teal-200 text-xs font-bold hover:bg-teal-200 transition cursor-pointer">
+            Copier
+          </button>
+        </div>
+        <button type="button" data-action="close-modal" data-modal="aboutModal" class="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm transition cursor-pointer">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-24 opacity-0 pointer-events-none transition-all duration-300 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 text-xs font-bold flex items-center gap-2 no-print">
+    <span class="w-2.5 h-2.5 rounded-full bg-teal-400"></span>
+    <span id="toastMessage">Protocole copié dans le presse-papiers</span>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // =========================================================================
+      // 1. MULTI-LANGUAGE TRANSLATION DICTIONARY (FR, AR, EN, DZ)
+      // =========================================================================
+      let currentLang = 'fr';
+      let currentMaparCat = 'all';
+
+      const I18N = {
+        fr: {
+          dir: 'ltr',
+          appTitle: "Feuille de calcul d'anesthésie",
+          appSubtitle: "Calculateur PK (TBW/IBW/LBW/ABW), Terrains SFAR, Voies Aériennes & MAPAR",
+          btnMapar: "GESTION DE TRAITEMENT EN Pré opératoire (MAPAR)",
+          presetsLbl: "Profils cliniques rapides (Tests) :",
+          presetNeo: "Nouveau-né (3.4kg)",
+          presetChild: "Enfant (5 ans)",
+          presetAdult: "Adulte Standard (75kg)",
+          presetObese: "Obèse Morbide (135kg)",
+          presetOld: "Sujet Âgé + IR",
+          sec1Title: "Paramètres Anthropométriques & Terrain Clinique",
+          lblAge: "Âge du patient",
+          unitYears: "Ans", unitMonths: "Mois", unitDays: "Jours", unitWeeks: "Semaines SA (Préma)",
+          lblSex: "Sexe", sexM: "Homme (H)", sexF: "Femme (F)",
+          lblWt: "Poids Réel (TBW - kg)",
+          lblHt: "Taille (cm)",
+          lblRenal: "Fonction Rénale (DFG)",
+          renalNorm: "Normale (DFG > 60 mL/min)",
+          renalMod: "Insuffisance Rénale Modérée (30-60)",
+          renalSev: "Insuffisance Rénale Sévère (< 30 / Dialyse)",
+          lblHepatic: "Fonction Hépatique",
+          hepNorm: "Normale (Child-Pugh A)",
+          hepMod: "Insuffisance Hépatique Modérée (Child B)",
+          hepSev: "Insuffisance Hépatique Sévère (Child C)",
+          lblCtx: "Terrain Clinique & Risques Spécifiques (Recommandations SFAR — Sélection multiple) :",
+          btnClearTerrain: "Réinitialiser (Standard)",
+          cardBmiLbl: "Indice Masse Corp.",
+          cardTbwLbl: "Poids Réel", cardTbwSub: "Célocurine®, Bridion®",
+          cardIbwLbl: "Poids Idéal", cardIbwSub: "Ventilation (VT), Curares, AL",
+          cardLbwLbl: "Poids Maigre", cardLbwSub: "Induction Propofol, Opioïdes",
+          cardAbwLbl: "Poids Ajusté", cardAbwSub: "IBW + 0.4×(TBW−IBW)",
+          adviceTitle: "Conseil Pratique & Stratégie Anesthésique Optimale (SFAR)",
+          sec2Title: "Intubation Endotrachéale & Voies Aériennes",
+          ettCuffedLbl: "Sonde AVEC ballonnet (DI)",
+          ettDepthLbl: "Repère fixation aux arcades",
+          guedelLbl: "Canule de Guedel",
+          guedelSub: "Mesure : commissure labiale → angle mandibule",
+          lmaLbl: "Masque Laryngé (ML) & Lame",
+          cuffWarnLbl: "Sécurité :",
+          sec3Title: "Paramètres Ventilateur & Hydratation",
+          vtIbwBadge: "VT calculé sur IBW",
+          ventVtLbl: "Volume Courant (VT)",
+          ventFrLbl: "Fréquence (FR)",
+          ventPepLbl: "PEP (PEEP)",
+          ventIeLbl: "Temps I/E",
+          fluidLbl: "Débit d'entretien IV (Règle 4-2-1 SFAR/ADARPEF) :",
+          sec4Title: "Sélection des Médicaments & Posologies Selon Propriétés Physico-Chimiques",
+          sec4Sub: "Cochez les molécules souhaitées dans chaque classe pour générer le protocole opératoire",
+          tabInd: "1. Induction",
+          tabMaint: "2. Entretien (Maintenance)",
+          tabLocal: "3. Anesthésiques Locaux",
+          tabEmerg: "4. Urgence & Antidotes",
+          catHyp: "Hypnotiques Intraveineux (Induction)",
+          catOpi: "Analgésiques Opioïdes (Induction)",
+          catCur: "Curares / Myorelaxants (Intubation)",
+          catVol: "Anesthésiques par Inhalation (Gaz & Volatils — MAC ajustée à l'âge selon Mapleson)",
+          catTiva: "Entretien Intraveineux (AIVOC / PSE & Réinjections)",
+          localBanner: "Sécurité Pharmacocinétique : Les doses maximales toxiques des anesthésiques locaux sont calculées sur le Poids Idéal (IBW) pour prévenir la toxicité systémique (LAST). Antidote immédiat : Intralipide 20%®.",
+          catCardio: "Médicaments Cardiovasculaires & Réanimation (ACR / Choc)",
+          catAntidote: "Antidotes & Décurarisation",
+          catOther: "Autres Molécules Essentielles du Chariot d'Urgence",
+          sec5Title: "Résumé du Protocole Anesthésique Prêt à Appliquer",
+          sec5Sub: "Feuille de route personnalisée générée selon les paramètres et médicaments sélectionnés",
+          btnResetDrugs: "Protocole Standard",
+          btnClearDrugs: "Tout décocher",
+          btnCopy: "Copier le protocole",
+          btnPrint: "Imprimer / PDF",
+          toastCopied: "Protocole copié dans le presse-papiers",
+          doseCalcLbl: "Dose calculée",
+          volCalcLbl: "Volume",
+          natureLbl: "Nature :",
+          mac1Lbl: "1.0 MAC (selon âge)",
+          mac08Lbl: "0.8 MAC (+ opioïde)",
+          sumPatient: "Patient & Morphologie",
+          sumWeights: "Scalaires PK (kg)",
+          sumAirway: "Intubation & Guedel",
+          sumVent: "Ventilation & Perfusion",
+          footerNote: "Outil d'aide à la décision clinique basé sur les référentiels SFAR, ADARPEF, ERC & MAPAR.",
+          maparTitle: "GESTION DE TRAITEMENT EN Pré opératoire (Source : MAPAR / SFAR / GIHP)",
+          maparSub: "Conduite à tenir, délais d'arrêt préopératoire, relais et reprise postopératoire",
+          thClass: "Classe", thDrug: "DCI / Noms Commerciaux", thStop: "Arrêt Préopératoire (MAPAR)", thCat: "Conduite à tenir / Relais / Reprise"
+        },
+
+        ar: {
+          dir: 'rtl',
+          appTitle: "ورقة حساب التخدير والإنعاش (anesthésie)",
+          appSubtitle: "حاسبة الأوزان الحركية الدوائية، توصيات SFAR حسب الحالة، وإدارة الأدوية قبل الجراحة (MAPAR)",
+          btnMapar: "GESTION DE TRAITEMENT EN Pré opératoire (MAPAR)",
+          presetsLbl: "حالات سريرية سريعة (للاختبار):",
+          presetNeo: "حديث ولادة (3.4kg)",
+          presetChild: "طفل (5 سنوات)",
+          presetAdult: "بالغ قياسي (75kg)",
+          presetObese: "سمنة مفرطة (135kg)",
+          presetOld: "مسن + قصور كلوي",
+          sec1Title: "المعطيات السريرية والقياسات الأنثروبومترية للمريض",
+          lblAge: "سن المريض",
+          unitYears: "سنوات", unitMonths: "أشهر", unitDays: "أيام", unitWeeks: "أسابيع حمل (خديج)",
+          lblSex: "الجنس", sexM: "ذكر (H)", sexF: "أنثى (F)",
+          lblWt: "الوزن الحقيقي (TBW - kg)",
+          lblHt: "الطول (cm)",
+          lblRenal: "وظائف الكلى (DFG)",
+          renalNorm: "طبيعية (DFG > 60 mL/min)",
+          renalMod: "قصور كلوي متوسط (30-60)",
+          renalSev: "قصور كلوي شديد (< 30 / تصفية دم)",
+          lblHepatic: "وظائف الكبد",
+          hepNorm: "طبيعية (Child-Pugh A)",
+          hepMod: "قصور كبدي متوسط (Child B)",
+          hepSev: "قصور كبدي شديد (Child C)",
+          lblCtx: "الحالة السريرية والسوابق (Terrain — توصيات SFAR، يمكن اختيار أكثر من حالة):",
+          btnClearTerrain: "إعادة ضبط (قياسي)",
+          cardBmiLbl: "مؤشر كتلة الجسم",
+          cardTbwLbl: "الوزن الحقيقي", cardTbwSub: "سوكساميثونيوم، سوغاماديكس",
+          cardIbwLbl: "الوزن المثالي", cardIbwSub: "التنفس (VT)، الكورار، الموضعي",
+          cardLbwLbl: "الكتلة الخالية من الدهون", cardLbwSub: "تحريض بروبوفول، الأفيونيات",
+          cardAbwLbl: "الوزن المعدل", cardAbwSub: "IBW + 0.4×(TBW−IBW)",
+          adviceTitle: "النصيحة العملية والبروتوكول التخديري الأنسب للمريض (SFAR)",
+          sec2Title: "التنبيب الرغامي وأدوات مجرى الهواء (Airway)",
+          ettCuffedLbl: "أنبوب التنبيب مع بالون (DI)",
+          ettDepthLbl: "عمق التثبيت عند القواطع",
+          guedelLbl: "كانولا غيدل (Guedel)",
+          guedelSub: "القياس: زاوية الفم ← زاوية الفك السفلي",
+          lmaLbl: "القناع الحنجري (ML) والنصل",
+          cuffWarnLbl: "قاعدة الأمان:",
+          sec3Title: "إعدادات جهاز التنفس والترطيب الوريدي",
+          vtIbwBadge: "حساب VT على الوزن المثالي IBW",
+          ventVtLbl: "الحجم الجاري (VT)",
+          ventFrLbl: "التردد التنفسي (FR)",
+          ventPepLbl: "الضغط الإيجابي (PEP)",
+          ventIeLbl: "نسبة I/E",
+          fluidLbl: "الترطيب الوريدي الأساسي (قاعدة 4-2-1 SFAR/ADARPEF):",
+          sec4Title: "اختيار الأدوية وحساب الجرعات حسب الطبيعة الكيميائية",
+          sec4Sub: "حدد الأدوية المرغوبة في كل فئة لإدراجها تلقائياً في ملخص البروتوكول أسفله",
+          tabInd: "1. التحريض (Induction)",
+          tabMaint: "2. الصيانة (Entretien)",
+          tabLocal: "3. التخدير الموضعي (AL)",
+          tabEmerg: "4. الطوارئ والترياق",
+          catHyp: "المنومات الوريدية (التحريض)",
+          catOpi: "المسكنات الأفيونية (التحريض)",
+          catCur: "المرخيات العضلية (الكورار)",
+          catVol: "المخدرات الاستنشاقية (حساب MAC المعدل حسب السن)",
+          catTiva: "الصيانة الوريدية المستمرة (PSE & Réinjections)",
+          localBanner: "تنبيه حركي دوائي: تُحسب الجرعة القصوى السمية للمخدرات الموضعية على الوزن المثالي (IBW) لتجنب التسمم الجهازي (LAST). الترياق الفوري: Intralipide 20%®.",
+          catCardio: "أدوية القلب والأوعية والإنعاش (ACR / الصدمة)",
+          catAntidote: "الترياق ومضادات السمية",
+          catOther: "أدوية الطوارئ الأساسية الأخرى",
+          sec5Title: "ملخص البروتوكول التخديري الجاهز للتطبيق",
+          sec5Sub: "ورقة عمل سريرية مخصصة للمريض بناءً على المعطيات والاختيارات المحددة",
+          btnResetDrugs: "البروتوكول القياسي",
+          btnClearDrugs: "إلغاء الكل",
+          btnCopy: "نسخ البروتوكول",
+          btnPrint: "طباعة / PDF",
+          toastCopied: "تم نسخ البروتوكول بنجاح",
+          doseCalcLbl: "الجرعة المحسوبة",
+          volCalcLbl: "الحجم",
+          natureLbl: "الطبيعة:",
+          mac1Lbl: "1.0 MAC (حسب السن)",
+          mac08Lbl: "0.8 MAC (+ أفيوني)",
+          sumPatient: "المريض والقياسات",
+          sumWeights: "الأوزان المعتمدة (kg)",
+          sumAirway: "التنبيب وغيدل",
+          sumVent: "التنفس والترطيب",
+          footerNote: "أداة مساعدة سريرية مبنية على توصيات SFAR و ADARPEF و MAPAR.",
+          maparTitle: "إدارة الأدوية المزمنة قبل الجراحة — GESTION DE TRAITEMENT EN Pré opératoire (MAPAR)",
+          maparSub: "الأدوية الواجب إيقافها أو استمرارها قبل العملية وفق بروتوكولات MAPAR / SFAR / GIHP",
+          thClass: "الفئة الدوائية", thDrug: "الدواء (DCI / الاسم التجاري)", thStop: "مدة التوقف قبل الجراحة", thCat: "التصرف السريري / البديل / الاستئناف"
+        },
+
+        en: {
+          dir: 'ltr',
+          appTitle: "Anesthesia Calculation Sheet",
+          appSubtitle: "PK Scalars (TBW/IBW/LBW/ABW), SFAR Clinical Terrain Alerts & MAPAR Pre-op Management",
+          btnMapar: "Pre-op Medication Management (MAPAR)",
+          presetsLbl: "Quick Clinical Profiles (Presets):",
+          presetNeo: "Neonate (3.4kg)",
+          presetChild: "Child (5 yrs)",
+          presetAdult: "Standard Adult (75kg)",
+          presetObese: "Morbid Obesity (135kg)",
+          presetOld: "Elderly + CKD",
+          sec1Title: "Patient Anthropometrics & Clinical Terrain",
+          lblAge: "Patient Age",
+          unitYears: "Years", unitMonths: "Months", unitDays: "Days", unitWeeks: "Gestational Weeks (Preterm)",
+          lblSex: "Sex", sexM: "Male (M)", sexF: "Female (F)",
+          lblWt: "Actual Body Weight (TBW - kg)",
+          lblHt: "Height (cm)",
+          lblRenal: "Renal Function (GFR)",
+          renalNorm: "Normal (GFR > 60 mL/min)",
+          renalMod: "Moderate Renal Impairment (30-60)",
+          renalSev: "Severe Renal Impairment (< 30 / Dialysis)",
+          lblHepatic: "Hepatic Function",
+          hepNorm: "Normal (Child-Pugh A)",
+          hepMod: "Moderate Hepatic Impairment (Child B)",
+          hepSev: "Severe Hepatic Impairment (Child C)",
+          lblCtx: "Clinical Terrain & Comorbidities (SFAR Guidelines — Multi-select):",
+          btnClearTerrain: "Reset (Standard)",
+          cardBmiLbl: "Body Mass Index",
+          cardTbwLbl: "Total Weight", cardTbwSub: "Succinylcholine, Sugammadex",
+          cardIbwLbl: "Ideal Weight", cardIbwSub: "Ventilation (VT), NMBAs, LA",
+          cardLbwLbl: "Lean Weight", cardLbwSub: "Propofol Induction, Opioids",
+          cardAbwLbl: "Adjusted Weight", cardAbwSub: "IBW + 0.4×(TBW−IBW)",
+          adviceTitle: "Clinical Decision Support & Optimal Anesthetic Strategy (SFAR)",
+          sec2Title: "Endotracheal Intubation & Airway Management",
+          ettCuffedLbl: "Cuffed ETT (Internal Diameter)",
+          ettDepthLbl: "Oral Fixation Depth (Teeth)",
+          guedelLbl: "Guedel Oropharyngeal Airway",
+          guedelSub: "Measure: mouth corner → mandibular angle",
+          lmaLbl: "Laryngeal Mask (LMA) & Blade",
+          cuffWarnLbl: "Safety Check:",
+          sec3Title: "Ventilator Settings & Fluid Therapy",
+          vtIbwBadge: "VT calculated on IBW",
+          ventVtLbl: "Tidal Volume (VT)",
+          ventFrLbl: "Resp. Rate (RR)",
+          ventPepLbl: "PEEP",
+          ventIeLbl: "I:E Ratio",
+          fluidLbl: "Maintenance IV Fluid Rate (4-2-1 Rule):",
+          sec4Title: "Drug Selection & Physicochemical / PK Dosing",
+          sec4Sub: "Select desired agents in each class to compile the operative protocol below",
+          tabInd: "1. Induction",
+          tabMaint: "2. Maintenance",
+          tabLocal: "3. Local Anesthetics",
+          tabEmerg: "4. Emergency & Antidotes",
+          catHyp: "Intravenous Hypnotics (Induction)",
+          catOpi: "Opioid Analgesics (Induction)",
+          catCur: "Neuromuscular Blockers (Intubation)",
+          catVol: "Volatile Anesthetics (Age-adjusted MAC via Mapleson)",
+          catTiva: "IV Maintenance (TIVA / Infusion & Boluses)",
+          localBanner: "PK Safety Alert: Maximum toxic doses of local anesthetics are calculated using Ideal Body Weight (IBW) to prevent LAST. Immediate antidote: Intralipid 20%®.",
+          catCardio: "Cardiovascular & Resuscitation Drugs (Cardiac Arrest / Shock)",
+          catAntidote: "Antidotes & Neuromuscular Reversal",
+          catOther: "Essential Crash Cart Medications",
+          sec5Title: "Actionable Anesthesia Protocol Summary",
+          sec5Sub: "Customized clinical sheet generated from patient metrics and selected medications",
+          btnResetDrugs: "Standard Protocol",
+          btnClearDrugs: "Uncheck All",
+          btnCopy: "Copy Protocol",
+          btnPrint: "Print / PDF",
+          toastCopied: "Protocol copied to clipboard",
+          doseCalcLbl: "Calculated Dose",
+          volCalcLbl: "Volume",
+          natureLbl: "Property:",
+          mac1Lbl: "1.0 MAC (Age-adj.)",
+          mac08Lbl: "0.8 MAC (+ Opioid)",
+          sumPatient: "Patient & Morphology",
+          sumWeights: "PK Scalars (kg)",
+          sumAirway: "Airway & Guedel",
+          sumVent: "Ventilation & Fluids",
+          footerNote: "Clinical decision support based on SFAR, ADARPEF, ERC & MAPAR guidelines.",
+          maparTitle: "Preoperative Medication Management (MAPAR / SFAR / GIHP)",
+          maparSub: "Medications to discontinue, bridge, or continue prior to surgery",
+          thClass: "Class", thDrug: "Drug (INN / Brand)", thStop: "Pre-op Cessation (MAPAR)", thCat: "Management / Bridging / Restart"
+        },
+
+        dz: {
+          dir: 'rtl',
+          appTitle: "ورقة حساب البنج والإنعاش (Anesthésie)",
+          appSubtitle: "حساب الأوزان، تنبيهات SFAR حسب حالة المريض، وجدول الدوايات لي تحبس قبل العملية (MAPAR)",
+          btnMapar: "الدوايات لي تحبس قبل العملية (MAPAR)",
+          presetsLbl: "حالات سريعة للتجربة:",
+          presetNeo: "بيبي جديد (3.4kg)",
+          presetChild: "طفل (5 سنين)",
+          presetAdult: "بالغ عادي (75kg)",
+          presetObese: "سمين بزاف (135kg)",
+          presetOld: "شيخ كبير + الكلاوي",
+          sec1Title: "معلومات المريض والحالة تاعو فالبلوك",
+          lblAge: "شحال في عمرو (Âge)",
+          unitYears: "سنين (Ans)", unitMonths: "شهور (Mois)", unitDays: "أيام (Jours)", unitWeeks: "سيمانات حمل (Préma)",
+          lblSex: "الجنس", sexM: "راجل (H)", sexF: "مرا (F)",
+          lblWt: "الميزان الحقيقي (TBW - kg)",
+          lblHt: "الطول (cm)",
+          lblRenal: "حالة الكلاوي (Fonction Rénale)",
+          renalNorm: "لاباس بيهم (DFG > 60)",
+          renalMod: "ناقصين شوية (DFG 30-60)",
+          renalSev: "عَيّانين بزاف / يدي الدياليز (< 30)",
+          lblHepatic: "حالة الكبدة (Fonction Hépatique)",
+          hepNorm: "لاباس بيها (Normale)",
+          hepMod: "عيانة شوية (Child B)",
+          hepSev: "عيانة بزاف / تشمع (Child C)",
+          lblCtx: "حالة المريض والأمراض المزمنة (Terrain SFAR — تقدر تخير بزاف):",
+          btnClearTerrain: "رجعها نورمال",
+          cardBmiLbl: "مؤشر السمنة (IMC)",
+          cardTbwLbl: "الميزان الحقيقي", cardTbwSub: "نحسبو بيه Célocurine و Bridion",
+          cardIbwLbl: "الميزان المثالي", cardIbwSub: "نحسبو بيه الريسبراتور، الكورار و AL",
+          cardLbwLbl: "الميزان بلا شحم", cardLbwSub: "نحسبو بيه Propofol و المورفينيك",
+          cardAbwLbl: "الميزان المعدّل", cardAbwSub: "IBW + 0.4×(TBW−IBW)",
+          adviceTitle: "نصيحة الطبيب واش يخرج على هاد المريض بالضبط (SFAR)",
+          sec2Title: "الإنتوباسيون (Sonde) وكانولا غيدل (Guedel)",
+          ettCuffedLbl: "لاصوند بالبالون (Sonde à ballonnet)",
+          ettDepthLbl: "شحال ندخلوها عند السنين (Repère)",
+          guedelLbl: "كانولا غيدل (Guedel)",
+          guedelSub: "قيسها من طرف الفم حتى لزاوية الفك",
+          lmaLbl: "الماسك لارانجي (ML) ولا لام",
+          cuffWarnLbl: "رد بالك:",
+          sec3Title: "ريغلاج الريسبراتور (Ventilateur) والسيروم",
+          vtIbwBadge: "الـ VT يتحسب بالميزان المثالي IBW",
+          ventVtLbl: "حجم النفس (VT)",
+          ventFrLbl: "سرعة النفس (FR)",
+          ventPepLbl: "الضغط PEP",
+          ventIeLbl: "وقت الشهيق/الزفير I/E",
+          fluidLbl: "السيروم تاع الصيانة (قاعدة 4-2-1):",
+          sec4Title: "خَيّر الدوايات واحسب لادوز والمليلتر (mL)",
+          sec4Sub: "كوشي الدوايات لي راك حاب تخدم بيهم باه يخرجو فالبروتوكول لتحت",
+          tabInd: "1. الترقاد (Induction)",
+          tabMaint: "2. التكميل (Entretien)",
+          tabLocal: "3. البنج الموضعي (AL)",
+          tabEmerg: "4. ليرجونس والترياق (Urgence)",
+          catHyp: "المنومات فالوريد (Hypnotiques IV)",
+          catOpi: "مسكنات الألم القوية (Morphiniques)",
+          catCur: "مرخيات العضلات (Curares)",
+          catVol: "الغاز تاع البنج (Halogénés — MAC حسب العمر)",
+          catTiva: "التكميل فالوريد بالسيرانغ إلكتريك (PSE / TIVA)",
+          localBanner: "معلومة مهمة: لادوز الماكس تاع البنج الموضعي تتحسب بالميزان المثالي (IBW) باه ما يصرالوش تسمم (LAST). الترياق تاعو هو Intralipide 20%®.",
+          catCardio: "دوايات القلب ولاطونسيو ولاري (ACR / Choc)",
+          catAntidote: "الترياق لي يبطل مفعول البنج (Antidotes)",
+          catOther: "دوايات ليرجونس اللخرين فالشيريو",
+          sec5Title: "ملخص البروتوكول واجد للتطبيق فالبلوك",
+          sec5Sub: "هادي الورقة فيها غير الدوايات ولي ريغلاج لي خيرتهم لهاد المريض",
+          btnResetDrugs: "البروتوكول العادي",
+          btnClearDrugs: "نحي الكل",
+          btnCopy: "كوبي البروتوكول",
+          btnPrint: "إمبريمي الورقة (Print)",
+          toastCopied: "تم نسخ البروتوكول بنجاح!",
+          doseCalcLbl: "لادوز المحسوبة",
+          volCalcLbl: "شحال تجبد (mL)",
+          natureLbl: "الطبيعة:",
+          mac1Lbl: "1.0 MAC (حسب العمر)",
+          mac08Lbl: "0.8 MAC (مع أفيوني)",
+          sumPatient: "المريض والميزان",
+          sumWeights: "الأوزان المحسوبة (kg)",
+          sumAirway: "لاصوند والغيدل",
+          sumVent: "الريسبراتور والسيروم",
+          footerNote: "تطبيق طبي مبني على توصيات SFAR و ADARPEF و MAPAR.",
+          maparTitle: "جدول الدوايات لي تحبس ولا تكمل قبل العملية (MAPAR / SFAR)",
+          maparSub: "وقتاش تحبس الدوا قبل البلوك ووقتاش تعاود ترجعو مور العملية",
+          thClass: "نوع الدوا", thDrug: "اسم الدوا (DCI / التجاري)", thStop: "وقتاش يحبس قبل العملية", thCat: "واش دير معاه (Relais / Reprise)"
+        }
+      };
+
+      function t(key) {
+        return (I18N[currentLang] && I18N[currentLang][key]) || I18N.fr[key] || key;
+      }
+
+      // =========================================================================
+      // 2. TERRAINS (SFAR), MAPAR PRE-OP TABLE & PHARMACOLOGY CATALOG
+      // =========================================================================
+      const selectedTerrains = new Set();
+
+      const TERRAIN_OPTIONS = [
+        { id: 'shock', label: { fr: '🚨 Choc / Instabilité hémodynamique', ar: '🚨 صدمة / هبوط ضغط', en: '🚨 Shock / Instability', dz: '🚨 شوك / لاطونسيو طايحة' } },
+        { id: 'rsi', label: { fr: '⚡ Estomac plein / ISR', ar: '⚡ معدة ممتلئة / ISR', en: '⚡ Full Stomach / RSI', dz: '⚡ كرشو معمرة / ISR' } },
+        { id: 'asthma', label: { fr: '🫁 Asthme / BPCO', ar: '🫁 ربو / انسداد رئوي', en: '🫁 Asthma / COPD', dz: '🫁 الضيقة / BPCO' } },
+        { id: 'cardiac', label: { fr: '❤️ Cardiopathie / Coronarien', ar: '❤️ قصور قلبي / شرايين', en: '❤️ Ischemic / Heart Failure', dz: '❤️ القلب عيان / Coronarien' } },
+        { id: 'saos', label: { fr: '😴 SAOS sévère', ar: '😴 انقطاع النفس النومي', en: '😴 Severe OSA', dz: '😴 الشخير وانقطاع النفس (SAOS)' } },
+        { id: 'obstetric', label: { fr: '🤰 Obstétrique / Césarienne', ar: '🤰 حمل / قيصرية', en: '🤰 Pregnancy / C-Section', dz: '🤰 حمل / سيزاريان' } },
+        { id: 'htic', label: { fr: '🧠 HTIC / Neurochirurgie', ar: '🧠 ارتفاع ضغط الدماغ HTIC', en: '🧠 Elevated ICP / Neuro', dz: '🧠 ضغط الراس طالع (HTIC)' } },
+        { id: 'allergy', label: { fr: '⚠️ Allergie / Risque anaphylactique', ar: '⚠️ حساسية شديدة', en: '⚠️ Severe Allergy / Atopy', dz: '⚠️ حساسية واعرة (Allergie)' } }
+      ];
+
+      const MAPAR_PREOP_DATA = [
+        {
+          cat: 'anticoag',
+          classLabel: 'AOD (Anti-Xa)',
+          drug: 'Rivaroxaban (Xarelto®), Apixaban (Eliquis®), Edoxaban (Lixiana®)',
+          stop: 'Risque hémorragique faible : J-1 (dernier comprimé 24h avant). Risque élevé / ALR : J-3 (72h avant).',
+          catText: 'Aucun relais HBPM/HNF ! Reprise 6-8h après (risque faible) ou 24-72h après (risque élevé) dès hémostase acquise.'
+        },
+        {
+          cat: 'anticoag',
+          classLabel: 'AOD (Anti-IIa)',
+          drug: 'Dabigatran (Pradaxa®)',
+          stop: 'ClCr > 50 : J-2 (risque faible) à J-4 (risque élevé / ALR). ClCr 30-50 : J-3 à J-5.',
+          catText: 'Pas de relais HBPM. Antidote spécifique en urgence : Idarucizumab (Praxbind® 5g IV).'
+        },
+        {
+          cat: 'anticoag',
+          classLabel: 'AVK (Antivitamines K)',
+          drug: 'Acénocoumarol (Sintrom®), Warfarine (Coumadine®), Fluindione (Préviscan®)',
+          stop: 'Sintrom® : Arrêt J-3. Coumadine® / Préviscan® : Arrêt J-5. Objectif INR < 1.5 (< 1.2 neurochirurgie).',
+          catText: 'Relais HBPM dose curative UNIQUEMENT si haut risque thrombotique (valve mécanique, FA avec AVC récent, MTEV < 3 mois). Dernière injection HBPM 24h avant.'
+        },
+        {
+          cat: 'aap',
+          classLabel: 'Antiagrégant (Aspirine)',
+          drug: 'Acide acétylsalicylique (Kardégic® 75-160mg, Aspirine®)',
+          stop: 'POURSUIVRE dans la majorité des chirurgies (si prévention secondaire cardiovasculaire).',
+          catText: 'Arrêt J-3 uniquement en neurochirurgie intracrânienne, chirurgie du segment postérieur de l\'œil ou prostatectomie à haut risque.'
+        },
+        {
+          cat: 'aap',
+          classLabel: 'Antiagrégants (Inhibiteurs P2Y12)',
+          drug: 'Clopidogrel (Plavix®), Ticagrélor (Brilique®), Prasugrel (Efient®)',
+          stop: 'Brilique® : J-3 à J-5 | Plavix® : J-5 | Efient® : J-7 (si chirurgie à risque hémorragique ou ALR).',
+          catText: '⚠️ Vérifier impérativement la date de pose de stent coronaire (avis cardiologue). Maintenir Kardégic® en monothérapie si possible.'
+        },
+        {
+          cat: 'cv',
+          classLabel: 'Antihypertenseurs (IEC / ARA2)',
+          drug: 'Ramipril (Triatec®), Périndopril (Coversyl®), Losartan, Valsartan, Irbesartan',
+          stop: 'ARRÊTER 24h avant (ne pas donner le matin de l\'intervention) si prescrits pour HTA.',
+          catText: 'Risque d\'hypotension réfractaire à l\'induction (vasoplégie). ⚠️ POURSUIVRE si prescrits pour insuffisance cardiaque systolique (FEVG altérée).'
+        },
+        {
+          cat: 'cv',
+          classLabel: 'Bêtabloquants',
+          drug: 'Bisoprolol, Aténolol, Nébivolol, Propranolol, Carvédilol',
+          stop: 'NE JAMAIS ARRÊTER (Poursuivre jusqu\'au matin de l\'intervention avec une gorgée d\'eau).',
+          catText: 'L\'arrêt brutal expose à un effet rebond (tachycardie, ischémie myocardique peropératoire).'
+        },
+        {
+          cat: 'cv',
+          classLabel: 'Diurétiques',
+          drug: 'Furosémide (Lasilix®), Hydrochlorothiazide, Spironolactone',
+          stop: 'Suspendre le matin de l\'intervention.',
+          catText: 'Prévention de l\'hypovolémie et des troubles ioniques (kaliémie) à l\'induction. Reprendre dès reprise des apports.'
+        },
+        {
+          cat: 'diab',
+          classLabel: 'Antidiabétique (Biguanides)',
+          drug: 'Metformine (Glucophage®, Stagid®)',
+          stop: 'Suspendre le soir de la veille (J-1) et le matin de l\'intervention (J0).',
+          catText: 'Risque d\'acidose lactique en cas d\'insuffisance rénale aiguë ou injection de produit de contraste iodé. Reprise à J+2 après contrôle créatinine.'
+        },
+        {
+          cat: 'diab',
+          classLabel: 'Gliflozines (iSGLT2)',
+          drug: 'Dapagliflozine (Forxiga®), Empagliflozine (Jardiance®)',
+          stop: 'ARRÊT IMPÉRATIF 3 à 4 jours avant la chirurgie (J-3 / J-4) — Recommandation SFAR/MAPAR.',
+          catText: 'Risque majeur d\'acidocétose diabétique euglycémique (glycémie normale mais cétonémie élevée) en période de jeûne/stress chirurgical.'
+        },
+        {
+          cat: 'diab',
+          classLabel: 'Sulfamides / Analogues GLP-1',
+          drug: 'Gliclazide (Diamicron®), Glimépiride | Sémaglutide (Ozempic®), Liraglutide',
+          stop: 'Sulfamides : Arrêt le matin de J0. Analogues GLP-1 hebdomadaires : arrêt 7 jours avant (estomac plein).',
+          catText: 'Prévention des hypoglycémies (sulfamides) et de la gastroparésie/stase gastrique (GLP-1 → échographie gastrique ou ISR).'
+        },
+        {
+          cat: 'neuro',
+          classLabel: 'Psychotropes & Antiparkinsoniens',
+          drug: 'Lithium (Téralithe®), IMAO irréversibles, L-Dopa (Modopar®, Sinemet®)',
+          stop: 'Lithium : Arrêt 24-48h avant (chirurgie majeure). L-Dopa : POURSUIVRE jusqu\'au bloc.',
+          catText: 'Lithium potentialise les curares et risque de surdosage si déshydratation. L-Dopa : arrêt brutal = rigidité thoracique / syndrome malin.'
+        },
+        {
+          cat: 'neuro',
+          classLabel: 'Corticoïdes / AINS / Phytothérapie',
+          drug: 'Prednisone (Cortancyl®) | Ibuprofène, Kétoprofène | Ail, Gingembre, Ginseng, Ginkgo',
+          stop: 'Corticoïdes : POURSUIVRE (+ substitution HHC 100mg si > 5mg/j > 3 sem). AINS : Arrêt 24-48h. Phytothérapie : J-7.',
+          catText: 'Les plantes médicinales (ail, ginkgo, ginseng) augmentent le risque hémorragique peropératoire.'
+        }
+      ];
+
+      const DEFAULT_DRUGS = [
+        'propofol_ind',
+        'fentanyl_ind',
+        'rocuronium_ind',
+        'sevoflurane_maint',
+        'remifentanil_maint',
+        'ephedrine_emerg',
+        'atropine_emerg',
+        'adrenaline_emerg',
+        'sugammadex_emerg'
+      ];
+
+      const selectedDrugs = new Set(DEFAULT_DRUGS);
+      let currentMetrics = {};
+
+      const DRUG_CATALOG = {
+        indHypnotics: [
+          {
+            id: 'propofol_ind',
+            dci: 'Propofol',
+            brands: 'Diprivan®, Propofol Lipuro®, Fresofol®',
+            nature: {
+              fr: 'Lipophile — Redistribution rapide, clairance hépatique/extra-hépatique',
+              ar: 'محب للدهون (Lipophile) — توزيع سريع',
+              en: 'Lipophilic — Rapid redistribution, high clearance',
+              dz: 'يذوب فالشحم (Lipophile) — يخدم بالخف ويفطن بالخف'
+            },
+            scalar: 'LBW',
+            conc: 10,
+            concLabel: '10 mg/mL (1%)',
+            unit: 'mg',
+            getDose: (m) => {
+              let min = 1.5, max = 2.5, note = '';
+              if (m.ageYears < 1) {
+                min = 2.5; max = 3.5;
+                note = { fr: 'Nourrisson : volume de distribution plus grand (2.5-3.5 mg/kg).', ar: 'الرضيع يحتاج جرعة تحريض أعلى.', en: 'Infants require higher induction dose.', dz: 'البيبي يحتاج دوز طالعة شوية (2.5-3.5 mg/kg).' }[currentLang];
+              } else if (m.ageYears < 16) {
+                min = 2.5; max = 3.0;
+              } else if (m.ageYears >= 65) {
+                min = 1.0; max = 1.5;
+                note = { fr: 'Sujet âgé : réduire la dose de 30-50% et injecter lentement.', ar: 'المسنين: تخفيض الجرعة 30-50% وحقن بطيء.', en: 'Elderly: reduce dose by 30-50%, titrate slowly.', dz: 'الشيخ الكبير: نقص لادوز بـ 30-50% ودفعو غير بالعقل.' }[currentLang];
+              }
+              if (selectedTerrains.has('shock')) {
+                min *= 0.5; max *= 0.5;
+                note = { fr: '⚠️ À éviter en état de choc ! Préférer Étomidate ou Kétamine.', ar: '⚠️ غير مفضل في الصدمة! يفضل Étomidate أو Kétamine.', en: '⚠️ Avoid in shock! Prefer Etomidate or Ketamine.', dz: '⚠️ يطيح لاطونسيو فالشوك! من الأحسن دير Étomidate ولا Kétamine.' }[currentLang];
+              }
+              return { min, max, note };
+            }
+          },
+          {
+            id: 'etomidate_ind',
+            dci: 'Étomidate',
+            brands: 'Hypnomidate®, Etomidate Lipuro®',
+            nature: {
+              fr: 'Lipophile — Stabilité hémodynamique maximale',
+              ar: 'محب للدهون — ثبات هيموديناميكي عالٍ',
+              en: 'Lipophilic — Maximal hemodynamic stability',
+              dz: 'يذوب فالشحم — ما يطيحش لاطونسيو قاع'
+            },
+            scalar: 'LBW',
+            conc: 2,
+            concLabel: '2 mg/mL',
+            unit: 'mg',
+            getDose: (m) => {
+              let min = 0.2, max = 0.3;
+              let note = { fr: 'Hypnotique de choix si instabilité hémodynamique ou cardiopathie.', ar: 'الخيار الأول في عدم الاستقرار الهيموديناميكي.', en: 'First choice in hemodynamic instability.', dz: 'هادا هو المليح كي تكون لاطونسيو طايحة ولا القلب عيان.' }[currentLang];
+              if (m.ageYears >= 70) { min = 0.15; max = 0.2; }
+              return { min, max, note };
+            }
+          },
+          {
+            id: 'ketamine_ind',
+            dci: 'Kétamine',
+            brands: 'Kétalar®, Eskesia®, Ketamine®',
+            nature: {
+              fr: 'Lipophile — Sympathomimétique & bronchodilatateur',
+              ar: 'محب للدهون — محاكي ودي وموسع قصبي',
+              en: 'Lipophilic — Sympathomimetic & bronchodilator',
+              dz: 'يطلع لاطونسيو ويحل القصبات الهوائية'
+            },
+            scalar: 'IBW',
+            conc: 10,
+            concLabel: '10 mg/mL (dilué)',
+            unit: 'mg',
+            getDose: (m) => {
+              let min = 1.5, max = 2.0;
+              let note = { fr: 'Idéal en cas de choc hémorragique, asthme aigu grave ou brûlés.', ar: 'مثالي في الصدمة النزفية والربو الحاد.', en: 'Ideal in hemorrhagic shock or severe asthma.', dz: 'هايل فالشوك تاع النزيف والضيقة (Asthme).' }[currentLang];
+              if (selectedTerrains.has('shock')) { min = 1.0; max = 1.5; }
+              if (selectedTerrains.has('htic')) {
+                note = { fr: '⚠️ Prudence si HTIC décompensée.', ar: '⚠️ حذر في ارتفاع ضغط الدماغ.', en: '⚠️ Caution in severe elevated ICP.', dz: '⚠️ رد بالك إذا ضغط الراس طالع بزاف.' }[currentLang];
+              }
+              return { min, max, note };
+            }
+          },
+          {
+            id: 'thiopental_ind',
+            dci: 'Thiopental',
+            brands: 'Pentothal®, Nesdonal®',
+            nature: {
+              fr: 'Très lipophile — Action ultra-rapide (30 sec)',
+              ar: 'محب للدهون جداً — مفعول فوري',
+              en: 'Highly lipophilic — Ultra-rapid onset',
+              dz: 'يرقد في 30 ثانية — يستعملوه فـ ISR والسيزاريان'
+            },
+            scalar: 'LBW',
+            conc: 25,
+            concLabel: '25 mg/mL (2.5%)',
+            unit: 'mg',
+            getDose: (m) => {
+              let min = 4.0, max = 6.0;
+              let note = { fr: 'Référence en ISR et césarienne (4-5 mg/kg).', ar: 'يستعمل في التحريض السريع والقيصرية.', en: 'Used in RSI and emergency C-section.', dz: 'مليح للسيزاريان المستعجلة و ISR.' }[currentLang];
+              if (m.ageYears < 1) { min = 5.0; max = 7.0; }
+              else if (m.ageYears >= 65) { min = 2.5; max = 3.5; }
+              if (m.hepatic !== 'normal') { min *= 0.75; max *= 0.75; }
+              if (selectedTerrains.has('shock')) {
+                min *= 0.5; max *= 0.5;
+                note = { fr: '⚠️ Risque d\'hypotension sévère en cas de choc !', ar: '⚠️ خطر هبوط الضغط في الصدمة!', en: '⚠️ Severe hypotension risk in shock!', dz: '⚠️ يطيح لاطونسيو بزاف فالشوك!' }[currentLang];
+              }
+              return { min, max, note };
+            }
+          },
+          {
+            id: 'midazolam_ind',
+            dci: 'Midazolam',
+            brands: 'Hypnovel®, Dormicum®',
+            nature: {
+              fr: 'Lipophile au pH sanguin — Métabolite actif rénal (1-OH)',
+              ar: 'محب للدهون — مستقلب كلوي فعال',
+              en: 'Lipophilic at blood pH — Active renal metabolite',
+              dz: 'للمهدئات (Sédation) — يتراكم كي يكونو الكلاوي عيانين'
+            },
+            scalar: 'IBW',
+            conc: 1,
+            concLabel: '1 mg/mL',
+            unit: 'mg',
+            getDose: (m) => {
+              let min = 0.03, max = 0.05;
+              let note = { fr: 'Sédation / co-induction.', ar: 'تهدئة ومشاركة تحريضية.', en: 'Sedation / co-induction.', dz: 'ينقص الستريس قبل الترقاد.' }[currentLang];
+              if (m.ageYears >= 65) { min = 0.015; max = 0.025; }
+              if (m.renal === 'severe' || m.hepatic === 'severe') {
+                min *= 0.5; max *= 0.5;
+                note = { fr: '⚠️ Accumulation du métabolite actif en insuffisance rénale/hépatique : réduire de 50%.', ar: '⚠️ تراكم المستقلب الفعال في القصور الكلوي/الكبدي.', en: '⚠️ Active metabolite accumulation in renal/hepatic failure.', dz: '⚠️ يطول بزاف فالكلاوي والكبدة العيانين: نقص النص!' }[currentLang];
+              }
+              return { min, max, note };
+            }
+          }
+        ],
+
+        indOpioids: [
+          {
+            id: 'fentanyl_ind',
+            dci: 'Fentanyl',
+            brands: 'Fentanyl®',
+            nature: { fr: 'Lipophile — Métabolisme hépatique', ar: 'محب للدهون — استقلاب كبدي', en: 'Lipophilic — Hepatic metabolism', dz: 'يذوب فالشحم — يتصفى فالكبدة' },
+            scalar: 'LBW',
+            conc: 50,
+            concLabel: '50 µg/mL',
+            unit: 'µg',
+            getDose: (m) => {
+              let min = 2.0, max = 3.0, note = '';
+              if (m.ageYears >= 65) { min = 1.0; max = 1.5; note = { fr: 'Réduction 40-50% chez le sujet âgé.', ar: 'تخفيض 50% لدى المسنين.', en: 'Reduce 50% in elderly.', dz: 'نقص النص عند الشيخ الكبير.' }[currentLang]; }
+              return { min, max, note };
+            }
+          },
+          {
+            id: 'sufentanil_ind',
+            dci: 'Sufentanil',
+            brands: 'Sufenta®',
+            nature: { fr: 'Très lipophile — Stabilité cardiovasculaire', ar: 'محب للدهون جداً — ثبات قلبي', en: 'Highly lipophilic — CV stability', dz: 'قوي بزاف ويحافظ على القلب' },
+            scalar: 'LBW',
+            conc: 5,
+            concLabel: '5 µg/mL',
+            unit: 'µg',
+            getDose: (m) => {
+              let min = 0.2, max = 0.3, note = '';
+              if (m.ageYears >= 65) { min = 0.1; max = 0.15; note = { fr: 'Réduction 50% chez le sujet âgé.', ar: 'تخفيض 50% لدى المسنين.', en: 'Reduce 50% in elderly.', dz: 'نقص النص عند الشيخ الكبير.' }[currentLang]; }
+              return { min, max, note };
+            }
+          },
+          {
+            id: 'remifentanil_ind',
+            dci: 'Rémifentanil',
+            brands: 'Ultiva®',
+            nature: { fr: 'Estérases plasmatiques — Indépendant foie/rein', ar: 'إسترات البلازما — مستقل عن الكبد والكلى', en: 'Plasma esterases — Organ-independent', dz: 'يتكسر فالدم وحدو — ما يهموش الكلاوي والكبدة' },
+            scalar: 'IBW',
+            conc: 50,
+            concLabel: '50 µg/mL',
+            unit: 'µg',
+            getDose: (m) => {
+              let min = 0.5, max = 1.0;
+              let note = { fr: 'Idéal si insuffisance rénale/hépatique ou obésité (calcul sur IBW). Injecter sur > 60 sec.', ar: 'مثالي في القصور الكلوي والكبدي والسمنة.', en: 'Ideal in renal/hepatic failure & obesity (IBW).', dz: 'هايل للي عندهم الكلاوي والكبدة والسمنة (تحسبو على IBW).' }[currentLang];
+              if (m.ageYears >= 65) { min = 0.3; max = 0.5; }
+              return { min, max, note };
+            }
+          },
+          {
+            id: 'alfentanil_ind',
+            dci: 'Alfentanil',
+            brands: 'Rapifen®',
+            nature: { fr: 'Délai d\'action très rapide (1 min)', ar: 'بداية مفعول سريعة جداً', en: 'Ultra-fast onset (1 min)', dz: 'يخدم في دقيقة وحدة' },
+            scalar: 'IBW',
+            conc: 500,
+            concLabel: '500 µg/mL',
+            unit: 'µg',
+            getDose: (m) => {
+              let min = 15, max = 30, note = '';
+              if (m.ageYears >= 65) { min = 10; max = 15; }
+              return { min, max, note };
+            }
+          }
+        ],
+
+        indCurares: [
+          {
+            id: 'suxamethonium_ind',
+            dci: 'Suxaméthonium',
+            brands: 'Célocurine®',
+            nature: { fr: 'Hydrophile — Dépolarisant (Calcul sur TBW)', ar: 'محب للماء — مزيل للاستقطاب (على TBW)', en: 'Hydrophilic — Depolarizing (Dosed on TBW)', dz: 'يذوب فالماء — الوحيد لي يتحسب على الميزان الحقيقي TBW' },
+            scalar: 'TBW',
+            conc: 50,
+            concLabel: '50 mg/mL',
+            unit: 'mg',
+            getDose: (m) => {
+              let min = 1.0, max = 1.0;
+              let note = { fr: 'Toujours dosé sur le Poids Réel (TBW), même chez l\'obèse ! (Nourrisson : 1.5-2 mg/kg).', ar: 'يُحسب دائماً على الوزن الحقيقي TBW حتى في السمنة.', en: 'Always dosed on Actual Weight (TBW), even in obesity.', dz: 'ديما يتحسب على الميزان الحقيقي (TBW) حتى فالسمين! (البيبي: 1.5-2 mg/kg).' }[currentLang];
+              if (m.ageYears < 1) { min = 1.5; max = 2.0; }
+              if (m.renal === 'severe') {
+                note += { fr: ' ⚠️ Vérifier kaliémie (risque d\'hyperkaliémie) !', ar: ' ⚠️ تحقق من بوتاسيوم الدم!', en: ' ⚠️ Check K+ (hyperkalemia risk)!', dz: ' ⚠️ شوف البوتاسيوم (K+) قبل ما تدفعو!' }[currentLang];
+              }
+              return { min, max, note };
+            }
+          },
+          {
+            id: 'rocuronium_ind',
+            dci: 'Rocuronium',
+            brands: 'Esmeron®',
+            nature: { fr: 'Hydrophile — Stéroïdien (Antidote : Bridion®)', ar: 'محب للماء — ستيرويدي (الترياق: Bridion®)', en: 'Hydrophilic — Steroidal (Reversal: Sugammadex)', dz: 'يذوب فالماء — يتحسب على IBW والترياق تاعو Bridion®' },
+            scalar: 'IBW',
+            conc: 10,
+            concLabel: '10 mg/mL',
+            unit: 'mg',
+            getDose: (m) => {
+              let min = 0.6, max = 0.6;
+              let note = { fr: 'Dose standard : 0.6 mg/kg IBW. Réversible par Sugammadex.', ar: 'الجرعة القياسية 0.6 mg/kg IBW.', en: 'Standard intubating dose: 0.6 mg/kg IBW.', dz: 'لادوز العادية 0.6 mg/kg IBW.' }[currentLang];
+              if (selectedTerrains.has('rsi') || selectedTerrains.has('obstetric')) {
+                min = 1.0; max = 1.2;
+                note = { fr: 'Dose ISR (1.0 - 1.2 mg/kg IBW) — conditions d\'intubation en 60 sec.', ar: 'جرعة التحريض السريع ISR (1.0-1.2 mg/kg IBW).', en: 'RSI dose (1.0-1.2 mg/kg IBW) — intubating conditions in 60s.', dz: 'دوز ISR بالخف (1.0 - 1.2 mg/kg IBW) — ينتيبي في 60 ثانية.' }[currentLang];
+              }
+              return { min, max, note };
+            }
+          },
+          {
+            id: 'atracurium_ind',
+            dci: 'Atracurium',
+            brands: 'Tracrium®',
+            nature: { fr: 'Hydrophile — Élimination d\'Hofmann', ar: 'محب للماء — تفكك هوفمان', en: 'Hydrophilic — Hofmann elimination', dz: 'يتفكك وحدو (Hofmann) — مليح للكلاوي والكبدة' },
+            scalar: 'IBW',
+            conc: 10,
+            concLabel: '10 mg/mL',
+            unit: 'mg',
+            getDose: (m) => {
+              let min = 0.5, max = 0.5;
+              let note = { fr: 'Indépendant du rein et du foie. Risque d\'histaminolibération si injection rapide.', ar: 'آمن في القصور الكلوي والكبدي.', en: 'Safe in renal/hepatic failure. May release histamine.', dz: 'ما يهموش الكلاوي والكبدة بصح يقدر يطلق الهيستامين.' }[currentLang];
+              if (selectedTerrains.has('asthma') || selectedTerrains.has('allergy')) {
+                note += { fr: ' ⚠️ Préférer Cisatracurium chez l\'asthmatique/allergique.', ar: ' ⚠️ يفضل Cisatracurium في الربو والحساسية.', en: ' ⚠️ Prefer Cisatracurium in asthma/allergy.', dz: ' ⚠️ فـ Asthme والحساسية من الأحسن دير Cisatracurium.' }[currentLang];
+              }
+              return { min, max, note };
+            }
+          },
+          {
+            id: 'cisatracurium_ind',
+            dci: 'Cisatracurium',
+            brands: 'Nimbex®',
+            nature: { fr: 'Hydrophile — Hofmann pur, sans histaminolibération', ar: 'محب للماء — تفكك هوفمان نقي', en: 'Hydrophilic — Pure Hofmann, no histamine', dz: 'أحسن كورار للكلاوي والكبدة والضيقة (Asthme)' },
+            scalar: 'IBW',
+            conc: 2,
+            concLabel: '2 mg/mL',
+            unit: 'mg',
+            getDose: () => {
+              const min = 0.15, max = 0.2;
+              const note = { fr: 'Premier choix en insuffisance rénale/hépatique sévère, allergie et asthme.', ar: 'الخيار الأول في القصور الكلوي والكبدي الشديد والربو.', en: 'First choice in severe renal/hepatic impairment & asthma.', dz: 'هادا هو اللول كي يكونو الكلاوي ولا الكبدة عيانين بزاف ولا عندو الضيقة.' }[currentLang];
+              return { min, max, note };
+            }
+          },
+          {
+            id: 'vecuronium_ind',
+            dci: 'Vécuronium',
+            brands: 'Norcuron®',
+            nature: { fr: 'Hydrophile — Stéroïdien (Antidote : Bridion®)', ar: 'محب للماء — ستيرويدي', en: 'Hydrophilic — Steroidal', dz: 'ستيرويدي — الترياق تاعو Bridion®' },
+            scalar: 'IBW',
+            conc: 4,
+            concLabel: '4 mg/mL',
+            unit: 'mg',
+            getDose: (m) => {
+              let min = 0.08, max = 0.1;
+              const note = { fr: 'Réversible par Sugammadex.', ar: 'يعاكس بالسوغاماديكس.', en: 'Reversed by Sugammadex.', dz: 'يتنحى بـ Bridion®.' }[currentLang];
+              if (m.renal === 'severe' || m.hepatic === 'severe') { min = 0.07; max = 0.08; }
+              return { min, max, note };
+            }
+          }
+        ],
+
+        maintVolatiles: [
+          {
+            id: 'sevoflurane_maint',
+            dci: 'Sévoflurane',
+            brands: 'Sévorane®, Sojourn®',
+            nature: { fr: 'Halogéné non irritant — Induction & Entretien', ar: 'غاز هالوجيني غير مخرش', en: 'Non-irritant volatile anesthetic', dz: 'الغاز المليح للدراري الصغار والضيقة (Asthme)' },
+            baseMac40: 2.05,
+            note: { fr: 'Idéal en pédiatrie et chez l\'asthmatique. La MAC dépend uniquement de l\'âge.', ar: 'الأفضل للأطفال والربو. يتأثر بالسن فقط.', en: 'Best for pediatrics and asthma. MAC depends on age.', dz: 'يمشي بالسن برك ماشي بالميزان.' }
+          },
+          {
+            id: 'isoflurane_maint',
+            dci: 'Isoflurane',
+            brands: 'Forène®, Aerrane®',
+            nature: { fr: 'Halogéné — Métabolisme hépatique minimal (<0.2%)', ar: 'غاز هالوجيني — استقلاب كبدي ضئيل', en: 'Volatile — Minimal hepatic metabolism', dz: 'مليح للعمليات الطوال (ما يترقدش بيه فالأول)' },
+            baseMac40: 1.15,
+            note: { fr: 'Entretien économique pour chirurgies longues (irritant à l\'induction).', ar: 'مناسب للعمليات الطويلة.', en: 'Cost-effective for long surgeries.', dz: 'يخدمو بيه فالتكميل (Entretien).' }
+          },
+          {
+            id: 'desflurane_maint',
+            dci: 'Desflurane',
+            brands: 'Suprane®',
+            nature: { fr: 'Halogéné — Réveil ultra-rapide (Obésité)', ar: 'غاز هالوجيني — إفاقة سريعة جداً', en: 'Volatile — Ultra-fast emergence', dz: 'يفطن بالخف فالسمان — ممنوع فالضيقة والدراري' },
+            baseMac40: 6.0,
+            note: { fr: 'Excellent chez l\'obèse morbide. ⚠️ Contre-indiqué dans l\'asthme et induction pédiatrique.', ar: 'ممتاز للسمنة. ⚠️ ممنوع في الربو وتحريض الأطفال.', en: 'Great in morbid obesity. ⚠️ Avoid in asthma & pediatric induction.', dz: 'هايل للسمين بزاف. ⚠️ إياك ديرو فالضيقة ولا تحريض الدراري!' }
+          },
+          {
+            id: 'n2o_maint',
+            dci: 'Protoxyde d\'azote (N₂O)',
+            brands: 'Kalinox® / Mélange O₂-N₂O',
+            nature: { fr: 'Gaz analgésique — Effet second gaz (MAC 104%)', ar: 'غاز مسكن (MAC 104%)', en: 'Analgesic gas (MAC 104%)', dz: 'غاز مساعد للتخدير — ممنوع فـ Pneumothorax وانسداد الأمعاء' },
+            baseMac40: 104.0,
+            note: { fr: '⚠️ Contre-indiqué si pneumothorax, occlusion intestinale, embolie gazeuse ou chirurgie oreille moyenne.', ar: '⚠️ ممنوع في استرواح الصدر وانسداد الأمعاء.', en: '⚠️ Contraindicated in pneumothorax, bowel obstruction, middle ear surgery.', dz: '⚠️ ممنوع إذا كاين هوا فالصدر (Pneumothorax) ولا مصران مسدود.' }
+          }
+        ],
+
+        maintIV: [
+          {
+            id: 'propofol_maint',
+            dci: 'Propofol (PSE / AIVOC)',
+            brands: 'Diprivan®',
+            nature: { fr: 'Entretien continu (4 - 8 mg/kg/h sur ABW)', ar: 'صيانة مستمرة على ABW', en: 'Continuous TIVA (4 - 8 mg/kg/h on ABW)', dz: 'سيرانغ إلكتريك (4-8 mg/kg/h على ABW)' },
+            scalar: 'ABW',
+            conc: 10,
+            concLabel: '10 mg/mL (1%)',
+            unit: 'mg/h',
+            isInfusion: true,
+            getDose: (m) => {
+              let min = 4.0, max = 8.0, note = '';
+              if (m.ageYears < 12) { min = 6.0; max = 10.0; }
+              else if (m.ageYears >= 65) { min = 3.0; max = 5.0; }
+              return { min, max, note };
+            }
+          },
+          {
+            id: 'remifentanil_maint',
+            dci: 'Rémifentanil (PSE)',
+            brands: 'Ultiva®',
+            nature: { fr: 'Perfusion continue (0.05 - 0.20 µg/kg/min sur IBW)', ar: 'تسريب مستمر على IBW', en: 'Continuous infusion (0.05 - 0.20 µg/kg/min IBW)', dz: 'سيرانغ إلكتريك (0.05 - 0.20 µg/kg/min على IBW)' },
+            scalar: 'IBW',
+            conc: 50,
+            concLabel: '50 µg/mL',
+            unit: 'µg/h',
+            isInfusion: true,
+            getDose: (m) => {
+              let min = 3.0, max = 12.0;
+              const note = { fr: 'Correspond à 0.05 - 0.20 µg/kg/min. Anticiper l\'analgésie post-opératoire.', ar: 'يعادل 0.05-0.20 µg/kg/min. حضر مسكن ما بعد الجراحة.', en: 'Equals 0.05-0.20 µg/kg/min. Plan post-op analgesia.', dz: 'يحبس بالخف كي تطفي السيرانغ — وجد مسكن الألم قبل ما تخلص العملية.' }[currentLang];
+              if (m.ageYears >= 65) { min = 2.0; max = 8.0; }
+              return { min, max, note };
+            }
+          },
+          {
+            id: 'cisatracurium_maint',
+            dci: 'Cisatracurium (Réinjection)',
+            brands: 'Nimbex®',
+            nature: { fr: 'Bolus d\'entretien (0.03 mg/kg IBW selon TOF)', ar: 'إعادة حقن كل 30-40 دقيقة', en: 'Maintenance bolus (0.03 mg/kg IBW)', dz: 'تعاود تزيدو (0.03 mg/kg IBW) حسب الـ TOF' },
+            scalar: 'IBW',
+            conc: 2,
+            concLabel: '2 mg/mL',
+            unit: 'mg',
+            getDose: () => ({ min: 0.03, max: 0.03, note: '' })
+          },
+          {
+            id: 'rocuronium_maint',
+            dci: 'Rocuronium (Réinjection)',
+            brands: 'Esmeron®',
+            nature: { fr: 'Bolus d\'entretien (0.15 mg/kg IBW selon TOF)', ar: 'إعادة حقن كل 30-45 دقيقة', en: 'Maintenance bolus (0.15 mg/kg IBW)', dz: 'تعاود تزيدو (0.15 mg/kg IBW) حسب الـ TOF' },
+            scalar: 'IBW',
+            conc: 10,
+            concLabel: '10 mg/mL',
+            unit: 'mg',
+            getDose: () => ({ min: 0.15, max: 0.15, note: '' })
+          }
+        ],
+
+        localAnesthetics: [
+          {
+            id: 'lidocaine_plain',
+            dci: 'Lidocaïne (Non adrénalinée)',
+            brands: 'Xylocaïne® 1% / 2%',
+            nature: { fr: 'Amide — Dose max 4.5 mg/kg IBW (Max 300 mg)', ar: 'الجرعة القصوى 4.5 mg/kg IBW', en: 'Amide — Max 4.5 mg/kg IBW (Cap 300 mg)', dz: 'لادوز الماكس: 4.5 mg/kg IBW (ما تفوتش 300 mg)' },
+            scalar: 'IBW',
+            conc: 10,
+            concLabel: '10 mg/mL (1%)',
+            unit: 'mg',
+            getDose: (m) => {
+              const max = (m.hepatic === 'severe' || m.ageYears >= 75) ? 3.5 : 4.5;
+              return { min: max, max: max, cap: 300, note: '' };
+            }
+          },
+          {
+            id: 'lidocaine_adr',
+            dci: 'Lidocaïne + Adrénaline',
+            brands: 'Xylocaïne Adrénalinée®',
+            nature: { fr: 'Amide + Vasoconstricteur — Dose max 7 mg/kg IBW (Max 500 mg)', ar: 'الجرعة القصوى 7 mg/kg IBW', en: 'Max 7 mg/kg IBW (Cap 500 mg)', dz: 'لادوز الماكس: 7 mg/kg IBW — ممنوعة فالصبعين والنيف!' },
+            scalar: 'IBW',
+            conc: 10,
+            concLabel: '10 mg/mL (1%)',
+            unit: 'mg',
+            getDose: (m) => {
+              const max = (m.hepatic === 'severe' || m.ageYears >= 75) ? 5.5 : 7.0;
+              return { min: max, max: max, cap: 500, note: '' };
+            }
+          },
+          {
+            id: 'bupivacaine_local',
+            dci: 'Bupivacaïne',
+            brands: 'Marcaïne® 0.25% / 0.5%',
+            nature: { fr: 'Amide longue durée — Cardiotoxicité élevée (Max 2 mg/kg IBW)', ar: 'طويل المفعول — سمية قلبية (القصوى 2 mg/kg)', en: 'Long-acting — High cardiotoxicity (Max 2 mg/kg)', dz: 'يحكم بزاف بصح واعر على القلب (الماكس 2 mg/kg IBW) — ممنوع فالوريد!' },
+            scalar: 'IBW',
+            conc: 5,
+            concLabel: '5 mg/mL (0.5%)',
+            unit: 'mg',
+            getDose: (m) => {
+              const max = (selectedTerrains.has('obstetric') || m.ageYears >= 75) ? 1.6 : 2.0;
+              return { min: max, max: max, cap: 150, note: '' };
+            }
+          },
+          {
+            id: 'ropivacaine_local',
+            dci: 'Ropivacaïne',
+            brands: 'Naropeine® 0.2% / 0.75%',
+            nature: { fr: 'Amide longue durée — Moins cardiotoxique (Max 3 mg/kg IBW)', ar: 'أقل سمية قلبية (القصوى 3 mg/kg IBW)', en: 'Lower cardiotoxicity (Max 3 mg/kg IBW)', dz: 'آمن على القلب خير من Marcaïne (الماكس 3 mg/kg IBW)' },
+            scalar: 'IBW',
+            conc: 7.5,
+            concLabel: '7.5 mg/mL (0.75%)',
+            unit: 'mg',
+            getDose: (m) => {
+              const max = (m.ageYears >= 75) ? 2.4 : 3.0;
+              return { min: max, max: max, cap: 225, note: '' };
+            }
+          },
+          {
+            id: 'mepivacaine_local',
+            dci: 'Mépivacaïne',
+            brands: 'Carbocaïne®, Scandicaïne®',
+            nature: { fr: 'Amide durée intermédiaire — Dose max 5 mg/kg IBW (Max 400 mg)', ar: 'متوسط المفعول — القصوى 5 mg/kg IBW', en: 'Intermediate duration — Max 5 mg/kg IBW', dz: 'مفعول متوسط (الماكس 5 mg/kg IBW — حتى 400 mg)' },
+            scalar: 'IBW',
+            conc: 10,
+            concLabel: '10 mg/mL (1%)',
+            unit: 'mg',
+            getDose: (m) => {
+              const max = (m.ageYears >= 75) ? 4.0 : 5.0;
+              return { min: max, max: max, cap: 400, note: '' };
+            }
+          }
+        ],
+
+        emergCardio: [
+          {
+            id: 'adrenaline_emerg',
+            dci: 'Adrénaline (Épinéphrine)',
+            brands: 'Adrénaline® 1 mg/mL',
+            nature: { fr: 'ACR (1 mg/3-5 min) & Choc anaphylactique (titration 50-100 µg)', ar: 'توقف القلب (ACR) والصدمة التأقية', en: 'Cardiac Arrest & Anaphylaxis', dz: 'توقف القلب (1 mg كل 3-5 د) والحساسية الواعر (50-100 µg)' },
+            scalar: 'IBW',
+            conc: 0.1,
+            concLabel: '0.1 mg/mL (dilué 1/10)',
+            unit: 'mg',
+            getDose: (m) => {
+              if (m.ageYears < 16) return { min: 0.01, max: 0.01, cap: 1.0, note: 'Pédiatrie ACR : 10 µg/kg (0.01 mg/kg) IV.' };
+              return { min: 1 / m.ibw, max: 1 / m.ibw, fixedDose: '1 mg IV (ACR) | 0.05 - 0.1 mg IV (Choc anaphylactique)', note: '' };
+            }
+          },
+          {
+            id: 'ephedrine_emerg',
+            dci: 'Éphédrine',
+            brands: 'Éphédrine® 30 mg/10 mL',
+            nature: { fr: 'Hypotension sous anesthésie (Bolus 3-6 mg IV)', ar: 'هبوط الضغط تحت التخدير', en: 'Anesthesia-induced hypotension', dz: 'كي طيح لاطونسيو تحت البنج (1-2 mL فالوريد)' },
+            scalar: 'IBW',
+            conc: 3,
+            concLabel: '3 mg/mL (30mg/10mL)',
+            unit: 'mg',
+            getDose: (m) => {
+              if (m.ageYears < 16) return { min: 0.1, max: 0.2, note: 'Pédiatrie : 0.1 - 0.2 mg/kg IV.' };
+              return { min: 3 / m.ibw, max: 6 / m.ibw, fixedDose: '3 à 6 mg (1 - 2 mL) IV bolus', note: '' };
+            }
+          },
+          {
+            id: 'phenylephrine_emerg',
+            dci: 'Phényléphrine',
+            brands: 'Néosynéphrine® 50 µg/mL',
+            nature: { fr: 'Vasoconstricteur pur alpha-1 (1er choix césarienne)', ar: 'مقبض وعائي نقي (الأول في القيصرية)', en: 'Pure alpha-1 agonist (1st line C-section)', dz: 'الخيار اللول فهبوط لاطونسيو تاع السيزاريان' },
+            scalar: 'IBW',
+            conc: 50,
+            concLabel: '50 µg/mL',
+            unit: 'µg',
+            getDose: (m) => {
+              if (m.ageYears < 16) return { min: 1, max: 2, note: 'Pédiatrie : 1 - 2 µg/kg IV.' };
+              return { min: 50 / m.ibw, max: 100 / m.ibw, fixedDose: '50 à 100 µg (1 - 2 mL) IV bolus', note: '' };
+            }
+          },
+          {
+            id: 'atropine_emerg',
+            dci: 'Atropine',
+            brands: 'Atropine® 0.5 mg/mL',
+            nature: { fr: 'Bradycardie sévère / Malaise vagal', ar: 'بطء القلب الشديد', en: 'Severe bradycardia', dz: 'كي يطيح النبض (Bradycardie)' },
+            scalar: 'IBW',
+            conc: 0.5,
+            concLabel: '0.5 mg/mL',
+            unit: 'mg',
+            getDose: (m) => {
+              if (m.ageYears < 16) return { min: 0.02, max: 0.02, cap: 0.5, note: 'Pédiatrie : 0.02 mg/kg IV (min 0.1 mg).' };
+              return { min: 0.5 / m.ibw, max: 1.0 / m.ibw, fixedDose: '0.5 à 1 mg IV (Max 3 mg)', note: '' };
+            }
+          },
+          {
+            id: 'noradrenaline_emerg',
+            dci: 'Noradrénaline',
+            brands: 'Noradrénaline®',
+            nature: { fr: 'Vasopresseur PSE (0.05 - 0.5 µg/kg/min)', ar: 'رافع ضغط مستمر للصدمة', en: 'Continuous vasopressor infusion', dz: 'سيرانغ إلكتريك فالشوك (0.05 - 0.5 µg/kg/min)' },
+            scalar: 'IBW',
+            conc: 200,
+            concLabel: '200 µg/mL (10mg/50mL)',
+            unit: 'µg/h',
+            isInfusion: true,
+            getDose: () => ({ min: 3.0, max: 30.0, note: '' })
+          },
+          {
+            id: 'amiodarone_emerg',
+            dci: 'Amiodarone',
+            brands: 'Cordarone® 150 mg/3 mL',
+            nature: { fr: 'FV / TV réfractaire dans l\'ACR (Diluer dans G5% uniquement)', ar: 'الرجفان البطيني في توقف القلب (في G5%)', en: 'Refractory VF/VT in cardiac arrest (D5W only)', dz: 'فـ ACR بعد الشوك 3 (تتحل غير فـ G5%)' },
+            scalar: 'IBW',
+            conc: 50,
+            concLabel: '50 mg/mL (G5%)',
+            unit: 'mg',
+            getDose: (m) => {
+              if (m.ageYears < 16) return { min: 5, max: 5, cap: 300, note: 'Pédiatrie ACR : 5 mg/kg IV.' };
+              return { min: 300 / m.ibw, max: 300 / m.ibw, fixedDose: '300 mg IV après 3e choc (puis 150 mg)', note: '' };
+            }
+          }
+        ],
+
+        emergAntidotes: [
+          {
+            id: 'sugammadex_emerg',
+            dci: 'Sugammadex',
+            brands: 'Bridion® 100 mg/mL',
+            nature: { fr: 'Antidote Rocuronium / Vécuronium (Calcul sur TBW)', ar: 'ترياق روكورونيوم وفيكورونيوم (على TBW)', en: 'Rocuronium/Vecuronium reversal (TBW)', dz: 'يفك الكورار Esmeron في دقيقتين (يتحسب على TBW)' },
+            scalar: 'TBW',
+            conc: 100,
+            concLabel: '100 mg/mL',
+            unit: 'mg',
+            getDose: () => ({ min: 2.0, max: 4.0, note: '2 mg/kg (TOF≥2) | 4 mg/kg (PTC 1-2) | 16 mg/kg (Sauvetage ISR).' })
+          },
+          {
+            id: 'neostigmine_emerg',
+            dci: 'Néostigmine (+ Atropine)',
+            brands: 'Prostigmine® 0.5 mg/mL',
+            nature: { fr: 'Décurarisation (TOF ≥ 4) — Associer Atropine 15-20 µg/kg', ar: 'معاكس الكورار مع الأتروبين', en: 'Reversal with Atropine', dz: 'معاكس الكورار — ديما زيد معاه Atropine فالسيرانغ' },
+            scalar: 'IBW',
+            conc: 0.5,
+            concLabel: '0.5 mg/mL',
+            unit: 'mg',
+            getDose: () => ({ min: 0.04, max: 0.05, cap: 5.0, note: '' })
+          },
+          {
+            id: 'naloxone_emerg',
+            dci: 'Naloxone',
+            brands: 'Narcan® 0.4 mg/mL',
+            nature: { fr: 'Antidote des opioïdes (Titration lente)', ar: 'ترياق الأفيونيات', en: 'Opioid antagonist', dz: 'ترياق المورفين والفينتانيل (دفعو غير بالعقل)' },
+            scalar: 'IBW',
+            conc: 0.04,
+            concLabel: '0.04 mg/mL (dilué 1/10)',
+            unit: 'mg',
+            getDose: (m) => {
+              if (m.ageYears < 16) return { min: 0.01, max: 0.01, note: 'Pédiatrie : 10 µg/kg IV.' };
+              return { min: 0.04 / m.ibw, max: 0.08 / m.ibw, fixedDose: '0.04 - 0.08 mg (1-2 mL dilué) / 2 min', note: '' };
+            }
+          },
+          {
+            id: 'flumazenil_emerg',
+            dci: 'Flumazénil',
+            brands: 'Anexate® 0.1 mg/mL',
+            nature: { fr: 'Antidote des benzodiazépines (Hypnovel®)', ar: 'ترياق البنزوديازيبينات', en: 'Benzodiazepine antagonist', dz: 'ترياق Hypnovel®' },
+            scalar: 'IBW',
+            conc: 0.1,
+            concLabel: '0.1 mg/mL',
+            unit: 'mg',
+            getDose: (m) => {
+              if (m.ageYears < 16) return { min: 0.01, max: 0.01, cap: 0.2, note: 'Pédiatrie : 0.01 mg/kg IV.' };
+              return { min: 0.2 / m.ibw, max: 0.2 / m.ibw, fixedDose: '0.2 mg IV puis 0.1 mg/min (Max 1 mg)', note: '' };
+            }
+          },
+          {
+            id: 'intralipid_emerg',
+            dci: 'Intralipide 20%®',
+            brands: 'Intralipide 20%®',
+            nature: { fr: 'Antidote toxicité systémique anesthésiques locaux (LAST)', ar: 'ترياق التسمم بالمخدرات الموضعية', en: 'Local Anesthetic Systemic Toxicity antidote', dz: 'ترياق التسمم بالبنج الموضعي (1.5 mL/kg بولس)' },
+            scalar: 'IBW',
+            conc: 1,
+            concLabel: 'Émulsion 20%',
+            unit: 'mL',
+            getDose: () => ({ min: 1.5, max: 1.5, note: 'Bolus 1.5 mL/kg en 1 min puis 0.25 mL/kg/min.' })
+          }
+        ],
+
+        emergOther: [
+          {
+            id: 'tranexamic_emerg',
+            dci: 'Acide Tranexamique',
+            brands: 'Exacyl® 500 mg/5 mL',
+            nature: { fr: 'Antifibrinolytique — Hémorragie grave / Césarienne', ar: 'مضاد النزف الحاد والقيصرية', en: 'Antifibrinolytic — Major bleeding', dz: 'يحبس النزيف الواعر وفالسيزاريان (1g في 10 د)' },
+            scalar: 'IBW',
+            conc: 100,
+            concLabel: '100 mg/mL',
+            unit: 'mg',
+            getDose: (m) => {
+              if (m.ageYears < 16) return { min: 15, max: 15, cap: 1000, note: 'Pédiatrie : 15 mg/kg IV.' };
+              return { min: 1000 / m.ibw, max: 1000 / m.ibw, fixedDose: '1000 mg (1 g) IV sur 10 min', note: '' };
+            }
+          },
+          {
+            id: 'hydrocortisone_emerg',
+            dci: 'Hydrocortisone (HHC)',
+            brands: 'HHC® 100 mg',
+            nature: { fr: 'Corticoïde IV — Choc anaphylactique / Asthme aigu', ar: 'كورتيكويد للتأق والربو الحاد', en: 'IV Corticosteroid', dz: 'كورتيكويد للحساسية والضيقة' },
+            scalar: 'IBW',
+            conc: 50,
+            concLabel: '50 mg/mL',
+            unit: 'mg',
+            getDose: (m) => {
+              if (m.ageYears < 16) return { min: 2, max: 4, cap: 100, note: 'Pédiatrie : 2 - 4 mg/kg IV.' };
+              return { min: 100 / m.ibw, max: 200 / m.ibw, fixedDose: '100 à 200 mg IV', note: '' };
+            }
+          },
+          {
+            id: 'salbutamol_emerg',
+            dci: 'Salbutamol',
+            brands: 'Ventoline® 5 mg/2.5 mL',
+            nature: { fr: 'Bronchodilatateur bêta-2 — Bronchospasme peropératoire', ar: 'موسع قصبي للتشنج القصبي', en: 'Beta-2 bronchodilator', dz: 'يحل القصبات الهوائية فـ Bronchospasme' },
+            scalar: 'IBW',
+            conc: 2,
+            concLabel: '2 mg/mL (Nébul.)',
+            unit: 'mg',
+            getDose: (m) => {
+              if (m.ageYears < 5) return { min: 2.5 / m.ibw, max: 2.5 / m.ibw, fixedDose: '2.5 mg nébulisation O₂', note: '' };
+              return { min: 5.0 / m.ibw, max: 5.0 / m.ibw, fixedDose: '5 mg nébulisation (ou 4-8 bouffées sonde)', note: '' };
+            }
+          }
+        ]
+      };
+
+      // =========================================================================
+      // 3. HELPER FUNCTIONS: TOAST, MODALS, LANGUAGE, PRESETS
+      // =========================================================================
+      function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const msgEl = document.getElementById('toastMessage');
+        if (!toast || !msgEl) return;
+        msgEl.textContent = msg;
+        toast.classList.remove('translate-y-24', 'opacity-0');
+        setTimeout(() => {
+          toast.classList.add('translate-y-24', 'opacity-0');
+        }, 2500);
+      }
+
+      function openModal(id) {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('hidden');
+        if (id === 'maparModal') renderMaparTable();
+      }
+
+      function closeModal(id) {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      }
+
+      function setLanguage(lang) {
+        if (!I18N[lang]) return;
+        currentLang = lang;
+        document.documentElement.lang = lang === 'dz' ? 'ar' : lang;
+        document.documentElement.dir = I18N[lang].dir;
+
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+          const isMatch = btn.getAttribute('data-lang') === lang;
+          btn.className = isMatch
+            ? 'lang-btn px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-600 text-white shadow-sm transition cursor-pointer'
+            : 'lang-btn px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-700 transition cursor-pointer';
+        });
+
+        const textMap = {
+          'ui-app-title': 'appTitle',
+          'ui-app-subtitle': 'appSubtitle',
+          'ui-btn-mapar-text': 'btnMapar',
+          'ui-presets-lbl': 'presetsLbl',
+          'ui-preset-neo': 'presetNeo',
+          'ui-preset-child': 'presetChild',
+          'ui-preset-adult': 'presetAdult',
+          'ui-preset-obese': 'presetObese',
+          'ui-preset-old': 'presetOld',
+          'ui-sec1-title': 'sec1Title',
+          'ui-lbl-age': 'lblAge',
+          'ui-unit-years': 'unitYears',
+          'ui-unit-months': 'unitMonths',
+          'ui-unit-days': 'unitDays',
+          'ui-unit-weeks': 'unitWeeks',
+          'ui-lbl-sex': 'lblSex',
+          'ui-sex-m': 'sexM',
+          'ui-sex-f': 'sexF',
+          'ui-lbl-wt': 'lblWt',
+          'ui-lbl-ht': 'lblHt',
+          'ui-lbl-renal': 'lblRenal',
+          'ui-renal-norm': 'renalNorm',
+          'ui-renal-mod': 'renalMod',
+          'ui-renal-sev': 'renalSev',
+          'ui-lbl-hepatic': 'lblHepatic',
+          'ui-hep-norm': 'hepNorm',
+          'ui-hep-mod': 'hepMod',
+          'ui-hep-sev': 'hepSev',
+          'ui-lbl-ctx': 'lblCtx',
+          'ui-btn-clear-terrain': 'btnClearTerrain',
+          'ui-card-bmi-lbl': 'cardBmiLbl',
+          'ui-card-tbw-lbl': 'cardTbwLbl',
+          'ui-card-tbw-sub': 'cardTbwSub',
+          'ui-card-ibw-lbl': 'cardIbwLbl',
+          'ui-card-ibw-sub': 'cardIbwSub',
+          'ui-card-lbw-lbl': 'cardLbwLbl',
+          'ui-card-lbw-sub': 'cardLbwSub',
+          'ui-card-abw-lbl': 'cardAbwLbl',
+          'ui-card-abw-sub': 'cardAbwSub',
+          'ui-advice-title': 'adviceTitle',
+          'ui-sec2-title': 'sec2Title',
+          'ui-ett-cuffed-lbl': 'ettCuffedLbl',
+          'ui-ett-depth-lbl': 'ettDepthLbl',
+          'ui-guedel-lbl': 'guedelLbl',
+          'ui-guedel-sub': 'guedelSub',
+          'ui-lma-lbl': 'lmaLbl',
+          'ui-cuff-warn-lbl': 'cuffWarnLbl',
+          'ui-sec3-title': 'sec3Title',
+          'ui-vt-ibw-badge': 'vtIbwBadge',
+          'ui-vent-vt-lbl': 'ventVtLbl',
+          'ui-vent-fr-lbl': 'ventFrLbl',
+          'ui-vent-pep-lbl': 'ventPepLbl',
+          'ui-vent-ie-lbl': 'ventIeLbl',
+          'ui-fluid-lbl': 'fluidLbl',
+          'ui-sec4-title': 'sec4Title',
+          'ui-sec4-sub': 'sec4Sub',
+          'tab-induction': 'tabInd',
+          'tab-maintenance': 'tabMaint',
+          'tab-local': 'tabLocal',
+          'tab-emergency': 'tabEmerg',
+          'ui-local-banner': 'localBanner',
+          'ui-sec5-title': 'sec5Title',
+          'ui-sec5-sub': 'sec5Sub',
+          'ui-btn-reset-drugs': 'btnResetDrugs',
+          'ui-btn-clear-drugs': 'btnClearDrugs',
+          'ui-btn-copy': 'btnCopy',
+          'ui-btn-print': 'btnPrint',
+          'ui-footer-note': 'footerNote',
+          'ui-mapar-modal-title': 'maparTitle',
+          'ui-mapar-modal-sub': 'maparSub',
+          'ui-th-class': 'thClass',
+          'ui-th-drug': 'thDrug',
+          'ui-th-stop': 'thStop',
+          'ui-th-cat': 'thCat'
+        };
+
+        document.title = t('appTitle');
+
+        for (const [elId, key] of Object.entries(textMap)) {
+          const el = document.getElementById(elId);
+          if (el) el.textContent = t(key);
+        }
+
+        const catHeaders = [
+          ['ui-cat-hyp', 'bg-teal-500', 'catHyp'],
+          ['ui-cat-opi', 'bg-blue-500', 'catOpi'],
+          ['ui-cat-cur', 'bg-purple-500', 'catCur'],
+          ['ui-cat-vol', 'bg-cyan-500', 'catVol'],
+          ['ui-cat-tiva', 'bg-teal-500', 'catTiva'],
+          ['ui-cat-cardio', 'bg-rose-500', 'catCardio'],
+          ['ui-cat-antidote', 'bg-amber-500', 'catAntidote'],
+          ['ui-cat-other', 'bg-indigo-500', 'catOther']
+        ];
+        catHeaders.forEach(([id, dotColor, key]) => {
+          const el = document.getElementById(id);
+          if (el) el.innerHTML = `<span class="w-2 h-2 rounded-full ${dotColor}"></span> ${t(key)}`;
+        });
+
+        recalculateAll();
+        renderMaparTable();
+      }
+
+      function applyPreset(type) {
+        const ageVal = document.getElementById('ageValue');
+        const ageUnit = document.getElementById('ageUnit');
+        const wt = document.getElementById('actualWeight');
+        const ht = document.getElementById('heightCm');
+        const renal = document.getElementById('renalStatus');
+        const hepatic = document.getElementById('hepaticStatus');
+        const maleRadio = document.querySelector('input[name="sex"][value="M"]');
+
+        selectedTerrains.clear();
+        renal.value = 'normal';
+        hepatic.value = 'normal';
+        if (maleRadio) maleRadio.checked = true;
+
+        if (type === 'neonate') {
+          ageUnit.value = 'days'; ageVal.value = 7; wt.value = 3.4; ht.value = 50;
+        } else if (type === 'child') {
+          ageUnit.value = 'years'; ageVal.value = 5; wt.value = 19; ht.value = 110;
+        } else if (type === 'adult') {
+          ageUnit.value = 'years'; ageVal.value = 40; wt.value = 75; ht.value = 175;
+        } else if (type === 'obese') {
+          ageUnit.value = 'years'; ageVal.value = 42; wt.value = 135; ht.value = 172;
+          selectedTerrains.add('saos');
+        } else if (type === 'elderly') {
+          ageUnit.value = 'years'; ageVal.value = 82; wt.value = 64; ht.value = 165;
+          renal.value = 'severe';
+          selectedTerrains.add('shock');
+          selectedTerrains.add('cardiac');
+        }
+        recalculateAll();
+      }
+
+      // =========================================================================
+      // 4. ANTHROPOMETRIC & CLINICAL CALCULATIONS
+      // =========================================================================
+      function getAgeInYears() {
+        const val = parseFloat(document.getElementById('ageValue').value) || 0;
+        const unit = document.getElementById('ageUnit').value;
+        if (unit === 'days') return val / 365.25;
+        if (unit === 'months') return val / 12.0;
+        if (unit === 'weeks_ga') return 0; // Preterm neonate
+        return val;
+      }
+
+      function handleAgeUnitChange() {
+        const unit = document.getElementById('ageUnit').value;
+        const ageInput = document.getElementById('ageValue');
+        const weightInput = document.getElementById('actualWeight');
+        const heightInput = document.getElementById('heightCm');
+
+        if (unit === 'weeks_ga') {
+          ageInput.value = 32; weightInput.value = 1.6; heightInput.value = 41;
+        } else if (unit === 'days') {
+          ageInput.value = 10; weightInput.value = 3.5; heightInput.value = 50;
+        } else if (unit === 'months') {
+          ageInput.value = 6; weightInput.value = 7.5; heightInput.value = 68;
+        } else {
+          if (parseFloat(ageInput.value) < 1 || parseFloat(ageInput.value) > 110) ageInput.value = 35;
+          if (parseFloat(weightInput.value) < 10) weightInput.value = 75;
+          if (parseFloat(heightInput.value) < 80) heightInput.value = 175;
+        }
+        recalculateAll();
+      }
+
+      function calculateMetrics() {
+        const ageYears = getAgeInYears();
+        const ageRaw = parseFloat(document.getElementById('ageValue').value) || 0;
+        const ageUnit = document.getElementById('ageUnit').value;
+        const isPreterm = ageUnit === 'weeks_ga' && ageRaw < 37;
+        const sexEl = document.querySelector('input[name="sex"]:checked');
+        const sex = sexEl ? sexEl.value : 'M';
+        const tbw = Math.max(0.4, parseFloat(document.getElementById('actualWeight').value) || 70);
+        const heightCm = Math.max(25, parseFloat(document.getElementById('heightCm').value) || 170);
+        const heightM = heightCm / 100.0;
+        const renal = document.getElementById('renalStatus').value;
+        const hepatic = document.getElementById('hepaticStatus').value;
+
+        const bmi = tbw / (heightM * heightM);
+
+        let ibw = tbw;
+        if (ageYears >= 16 && heightCm >= 152.4) {
+          ibw = (sex === 'M' ? 50.0 : 45.5) + 0.91 * (heightCm - 152.4);
+        } else if (ageYears >= 16 && heightCm < 152.4) {
+          ibw = Math.max(35, (sex === 'M' ? 50.0 : 45.5) - 0.91 * (152.4 - heightCm));
+        } else {
+          ibw = heightCm < 70 ? tbw : 2.396 * Math.exp(0.01863 * heightCm);
+        }
+        ibw = Math.max(0.4, ibw);
+
+        let lbw = tbw;
+        if (ageYears >= 16) {
+          lbw = sex === 'M'
+            ? (9270 * tbw) / (6680 + 216 * bmi)
+            : (9270 * tbw) / (8780 + 244 * bmi);
+        } else {
+          lbw = Math.min(tbw, ibw * 0.92 + (tbw > ibw ? (tbw - ibw) * 0.25 : 0));
+        }
+        lbw = Math.min(tbw, Math.max(0.4, lbw));
+
+        const isObese = (ageYears >= 16 && bmi >= 30) || (tbw > 1.25 * ibw);
+        let abw = isObese ? (ibw + 0.4 * (tbw - ibw)) : tbw;
+        if (tbw < ibw) abw = tbw;
+
+        const ageCats = {
+          prema: { fr: `Prématuré (${ageRaw} SA)`, ar: `خديج (${ageRaw} أسبوع)`, en: `Preterm (${ageRaw} wks GA)`, dz: `خديج (${ageRaw} سيمانة)` },
+          neo: { fr: 'Nouveau-né (0-28 j)', ar: 'حديث ولادة (0-28 يوم)', en: 'Neonate (0-28 d)', dz: 'بيبي جديد (0-28 يوم)' },
+          inf: { fr: 'Nourrisson (< 1 an)', ar: 'رضيع (< سنة)', en: 'Infant (< 1 yr)', dz: 'بيبي رضيع (< عام)' },
+          ped: { fr: 'Pédiatrie (1-15 ans)', ar: 'طفل / مراهق', en: 'Pediatrics (1-15 yrs)', dz: 'طفل صغير (Pédiatrie)' },
+          adult: { fr: 'Adulte', ar: 'بالغ', en: 'Adult', dz: 'بالغ (Adulte)' },
+          old: { fr: 'Sujet Âgé (≥ 65 ans)', ar: 'مسن (≥ 65 سنة)', en: 'Elderly (≥ 65 yrs)', dz: 'كبير فالسن (≥ 65 عام)' },
+          veryOld: { fr: 'Gériatrie (≥ 75 ans)', ar: 'مسن جداً (≥ 75 سنة)', en: 'Geriatric (≥ 75 yrs)', dz: 'شيخ كبير بزاف (≥ 75 عام)' }
+        };
+
+        let catKey = 'adult';
+        if (isPreterm) catKey = 'prema';
+        else if (ageYears < 28 / 365.25) catKey = 'neo';
+        else if (ageYears < 1) catKey = 'inf';
+        else if (ageYears < 16) catKey = 'ped';
+        else if (ageYears >= 75) catKey = 'veryOld';
+        else if (ageYears >= 65) catKey = 'old';
+
+        return {
+          ageYears, ageRaw, ageUnit, isPreterm, sex, tbw, heightCm, bmi, ibw, lbw, abw,
+          isObese, renal, hepatic, ageCat: ageCats[catKey][currentLang]
+        };
+      }
+
+      function getScalarWeight(m, scalarName) {
+        if (m.tbw < m.ibw) {
+          if (scalarName === 'LBW') return Math.min(m.lbw, m.tbw);
+          return m.tbw;
+        }
+        return m[scalarName.toLowerCase()] || m.ibw;
+      }
+
+      // =========================================================================
+      // 5. RENDER TERRAIN PILLS, WEIGHTS, ADVICE, AIRWAY & VENTILATION
+      // =========================================================================
+      function renderTerrainPills() {
+        const container = document.getElementById('terrainPillsContainer');
+        if (!container) return;
+        container.innerHTML = TERRAIN_OPTIONS.map(opt => {
+          const active = selectedTerrains.has(opt.id);
+          const text = opt.label[currentLang] || opt.label.fr;
+          return `
+            <button type="button" data-terrain="${opt.id}"
+              class="terrain-pill-btn px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer
+              ${active
+                ? 'bg-teal-600 text-white border-teal-600 shadow-sm'
+                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:border-teal-500'}">
+              ${text}
+            </button>
+          `;
+        }).join('');
+      }
+
+      function updateWeightsAndAdvice(m) {
+        document.getElementById('ageCategoryBadge').textContent = m.ageCat;
+        document.getElementById('resBMI').textContent = m.bmi.toFixed(1) + ' kg/m²';
+        document.getElementById('resTBW').textContent = m.tbw.toFixed(1) + ' kg';
+        document.getElementById('resIBW').textContent = m.ibw.toFixed(1) + ' kg';
+        document.getElementById('resLBW').textContent = m.lbw.toFixed(1) + ' kg';
+        document.getElementById('resABW').textContent = m.abw.toFixed(1) + ' kg';
+
+        const bmiLabels = {
+          ped: { fr: 'Courbe staturo-pondérale', ar: 'منحنى النمو العمري', en: 'Growth chart curve', dz: 'حسب منحنى النمو تاع الدراري' },
+          under: { fr: 'Dénutrition / Maigreur', ar: 'نقص الوزن', en: 'Underweight', dz: 'ضعيف بزاف (نقص الميزان)' },
+          norm: { fr: 'Corpulence normale', ar: 'وزن طبيعي', en: 'Normal weight', dz: 'ميزان نورمال' },
+          over: { fr: 'Surpoids', ar: 'زيادة وزن', en: 'Overweight', dz: 'زايد شوية فالميزان' },
+          ob1: { fr: 'Obésité Modérée (Cl. I)', ar: 'سمنة درجة 1', en: 'Obesity Class I', dz: 'سمنة درجة 1' },
+          ob2: { fr: 'Obésité Sévère (Cl. II)', ar: 'سمنة درجة 2', en: 'Obesity Class II', dz: 'سمنة درجة 2' },
+          ob3: { fr: 'Obésité Morbide (Cl. III)', ar: 'سمنة مفرطة درجة 3', en: 'Morbid Obesity Class III', dz: 'سمنة مفرطة بزاف (درجة 3)' }
+        };
+
+        const bmiEl = document.getElementById('resBMIClass');
+        if (m.ageYears < 16) { bmiEl.textContent = bmiLabels.ped[currentLang]; bmiEl.className = 'text-xs font-semibold mt-1 text-slate-500'; }
+        else if (m.bmi < 18.5) { bmiEl.textContent = bmiLabels.under[currentLang]; bmiEl.className = 'text-xs font-bold mt-1 text-amber-600'; }
+        else if (m.bmi < 25) { bmiEl.textContent = bmiLabels.norm[currentLang]; bmiEl.className = 'text-xs font-bold mt-1 text-emerald-600'; }
+        else if (m.bmi < 30) { bmiEl.textContent = bmiLabels.over[currentLang]; bmiEl.className = 'text-xs font-bold mt-1 text-amber-600'; }
+        else if (m.bmi < 35) { bmiEl.textContent = bmiLabels.ob1[currentLang]; bmiEl.className = 'text-xs font-bold mt-1 text-orange-600'; }
+        else if (m.bmi < 40) { bmiEl.textContent = bmiLabels.ob2[currentLang]; bmiEl.className = 'text-xs font-bold mt-1 text-rose-600'; }
+        else { bmiEl.textContent = bmiLabels.ob3[currentLang]; bmiEl.className = 'text-xs font-bold mt-1 text-rose-700'; }
+
+        const advices = [];
+
+        if (m.isPreterm || m.ageYears < 28 / 365.25) {
+          advices.push({
+            fr: '👶 <strong>Nouveau-né / Prématuré (SFAR/ADARPEF) :</strong> Risque majeur d\'hypoglycémie, d\'hypothermie et d\'apnées postopératoires (monitorage SpO₂ 24h si < 60 SA). Perfusion isotonique glucosée 1% (Polyionique B66®) et bloc chauffé à 25-26°C.',
+            ar: '👶 <strong>حديث ولادة / خديج (SFAR/ADARPEF):</strong> خطر نقص السكر وانخفاض الحرارة وتوقف التنفس. تسريب محلول متوازن مع غلوكوز 1% وتدفئة غرفة العمليات.',
+            en: '👶 <strong>Neonate / Preterm (SFAR/ADARPEF):</strong> High risk of hypoglycemia, hypothermia, and post-op apnea. Start 1% dextrose isotonic crystalloid and active warming.',
+            dz: '👶 <strong>بيبي جديد / خديج:</strong> يطيحلو السكر وتبرد ذاتو بالخف! لازملو سيروم فيه 1% غلوكوز (B66) وسخن البلوك مليح.'
+          }[currentLang]);
+        } else if (m.ageYears < 1) {
+          advices.push({
+            fr: '🍼 <strong>Nourrisson (&lt; 1 an) :</strong> Limiter le jeûne (liquides clairs autorisés jusqu\'à H-1). Sonde Microcuff avec contrôle pression ballonnet &lt; 20 cmH₂O.',
+            ar: '🍼 <strong>رضيع (&lt; سنة):</strong> تقليل الصيام (السوائل الصافية مسموحة حتى ساعة قبل الجراحة) واستعمال أنبوب Microcuff.',
+            en: '🍼 <strong>Infant (&lt; 1 yr):</strong> Minimize fasting (clear fluids up to 1h pre-op). Use Microcuff ETT with cuff pressure &lt; 20 cmH₂O.',
+            dz: '🍼 <strong>بيبي رضيع:</strong> ما تخليهش صايم بزاف (الماء مسموح حتى ساعة قبل البنج) وخدم بـ Sonde Microcuff.'
+          }[currentLang]);
+        } else if (m.ageYears >= 65) {
+          advices.push({
+            fr: '👴 <strong>Sujet Âgé / Gériatrie (SFAR) :</strong> Réduire les doses d\'induction de 30-50%, titration lente, monitorage de profondeur d\'anesthésie (BIS) et maintien de la PAM pour prévenir le délirium postopératoire.',
+            ar: '👴 <strong>مسن (SFAR):</strong> تخفيض جرعات التحريض 30-50%، حقن بطيء، ومراقبة عمق التخدير لتجنب الهذيان.',
+            en: '👴 <strong>Elderly Patient (SFAR):</strong> Reduce induction doses by 30-50%, titrate slowly, use BIS monitoring to prevent post-op delirium.',
+            dz: '👴 <strong>شيخ كبير:</strong> نقص لادوز تاع الترقاد بـ 30-50%، ادفع الدوا غير بالعقل باه ما تطبش لاطونسيو.'
+          }[currentLang]);
+        }
+
+        if (m.isObese) {
+          advices.push({
+            fr: '⚖️ <strong>Obésité (SFAR) :</strong> Induction Propofol/Opioïdes sur <strong>LBW</strong> ; Curares non dépolarisants et VT sur <strong>IBW</strong> ; Entretien Propofol sur <strong>ABW</strong> ; Suxaméthonium et Sugammadex sur <strong>TBW</strong>. Préoxygénation en position proclive 30°.',
+            ar: '⚖️ <strong>السمنة (SFAR):</strong> تحريض Propofol/Opioïdes على <strong>LBW</strong>، الكورار والتنفس على <strong>IBW</strong>، وصيانة Propofol على <strong>ABW</strong>.',
+            en: '⚖️ <strong>Obesity (SFAR):</strong> Dose Propofol/Opioids induction on <strong>LBW</strong>; NMBAs & VT on <strong>IBW</strong>; Propofol maintenance on <strong>ABW</strong>; Succinylcholine on <strong>TBW</strong>.',
+            dz: '⚖️ <strong>سمين بزاف:</strong> رقدو بالـ Propofol على <strong>LBW</strong>، ريقل الريسبراتور والكورار على <strong>IBW</strong>، وطلع راسو بـ 30 درجة كي تعطيه الأكسجين.'
+          }[currentLang]);
+        }
+
+        if (m.renal !== 'normal') {
+          advices.push({
+            fr: '🩺 <strong>Insuffisance Rénale :</strong> Éviter Morphine, Midazolam et AINS. Privilégier l\'association <strong>Propofol + Rémifentanil + Cisatracurium / Atracurium</strong> (élimination indépendante du rein).',
+            ar: '🩺 <strong>قصور كلوي:</strong> تجنب المورفين والميدازولام ومضادات الالتهاب. يفضل <strong>Propofol + Rémifentanil + Cisatracurium</strong>.',
+            en: '🩺 <strong>Renal Impairment:</strong> Avoid Morphine, Midazolam & NSAIDs. Prefer <strong>Propofol + Remifentanil + Cisatracurium / Atracurium</strong>.',
+            dz: '🩺 <strong>كلاويه عيانين:</strong> إياك دير المورفين ولا Hypnovel ولا AINS! أحسن بروتوكول ليه هو <strong>Propofol + Ultiva + Nimbex</strong>.'
+          }[currentLang]);
+        }
+
+        if (m.hepatic !== 'normal') {
+          advices.push({
+            fr: '🧪 <strong>Insuffisance Hépatique :</strong> Privilégier le <strong>Cisatracurium</strong> (voie d\'Hofmann), le <strong>Rémifentanil</strong> (estérases) et le <strong>Sévoflurane</strong>.',
+            ar: '🧪 <strong>قصور كبدي:</strong> يفضل <strong>Cisatracurium</strong> و <strong>Rémifentanil</strong> و <strong>Sévoflurane</strong>.',
+            en: '🧪 <strong>Hepatic Impairment:</strong> Prefer <strong>Cisatracurium</strong>, <strong>Remifentanil</strong>, and <strong>Sevoflurane</strong>.',
+            dz: '🧪 <strong>كبدتو عيانة:</strong> اخدم بـ <strong>Nimbex</strong> و <strong>Ultiva</strong> و <strong>Sévorane</strong> لأنهم ما يتعبوش الكبدة.'
+          }[currentLang]);
+        }
+
+        if (selectedTerrains.has('shock')) {
+          advices.push({
+            fr: '🚨 <strong>Instabilité Hémodynamique / Choc (SFAR) :</strong> Éviter Propofol et Thiopental à pleine dose ; préférer <strong>Étomidate (0.2-0.3 mg/kg)</strong> ou <strong>Kétamine (1-1.5 mg/kg)</strong> avec Noradrénaline prête sur VVP dédiée.',
+            ar: '🚨 <strong>صدمة / عدم استقرار (SFAR):</strong> يفضل <strong>Étomidate</strong> أو <strong>Kétamine</strong> مع تحضير رافعات الضغط.',
+            en: '🚨 <strong>Shock / Instability (SFAR):</strong> Prefer <strong>Etomidate</strong> or <strong>Ketamine</strong> with vasopressors ready.',
+            dz: '🚨 <strong>مريض فشوك ولاطونسيو طايحة:</strong> رقدو بـ <strong>Hypnomidate®</strong> ولا <strong>Kétalar®</strong> ووجد Noradrénaline قبل ما تبدا.'
+          }[currentLang]);
+        }
+        if (selectedTerrains.has('rsi')) {
+          advices.push({
+            fr: '⚡ <strong>Estomac Plein / ISR (SFAR) :</strong> Préoxygénation 3 min (FiO₂ 100%, FeO₂ > 90%), pas de ventilation au masque avant intubation, <strong>Suxaméthonium (1 mg/kg TBW)</strong> ou <strong>Rocuronium (1.2 mg/kg IBW)</strong>.',
+            ar: '⚡ <strong>تحريض سريع ISR (SFAR):</strong> أكسجة 3 دقائق، بدون تهوية بالماسك، <strong>Suxaméthonium (1 mg/kg TBW)</strong> أو <strong>Rocuronium (1.2 mg/kg IBW)</strong>.',
+            en: '⚡ <strong>Rapid Sequence Induction (RSI):</strong> 3-min preoxygenation, no bag-mask ventilation, <strong>Succinylcholine (1 mg/kg TBW)</strong> or <strong>Rocuronium (1.2 mg/kg IBW)</strong>.',
+            dz: '⚡ <strong>إنتوباسيون بالخف (ISR):</strong> عطيه الأكسجين 3 دقايق، ما تفونتيليش بالماسك، ودير <strong>Célocurine (1 mg/kg TBW)</strong> ولا <strong>Esmeron (1.2 mg/kg IBW)</strong>.'
+          }[currentLang]);
+        }
+        if (selectedTerrains.has('asthma')) {
+          advices.push({
+            fr: '🫁 <strong>Asthme Aigu / BPCO (SFAR) :</strong> Induction profonde par <strong>Propofol</strong> ou <strong>Kétamine</strong>, entretien par <strong>Sévoflurane</strong>, allonger le temps expiratoire (<strong>I:E = 1:3</strong>) pour éviter l\'auto-PEP. Éviter Atracurium et Desflurane.',
+            ar: '🫁 <strong>ربو حاد / BPCO:</strong> تحريض بالبروبوفول أو الكيتامين وصيانة بالسيفوفلوران، إطالة الزفير (I:E = 1:3). تجنب الأتراكوريوم والديسفلوران.',
+            en: '🫁 <strong>Severe Asthma / COPD:</strong> Induce with Propofol/Ketamine, maintain with Sevoflurane, prolong expiration (I:E = 1:3). Avoid Atracurium & Desflurane.',
+            dz: '🫁 <strong>عندو الضيقة (Asthme):</strong> رقدو بـ Propofol ولا Kétalar وكمل بـ Sévorane، وطول الزفير (I:E = 1:3). إيّاك دير Tracrium ولا Desflurane.'
+          }[currentLang]);
+        }
+        if (selectedTerrains.has('cardiac')) {
+          advices.push({
+            fr: '❤️ <strong>Terrain Coronarien / Insuffisance Cardiaque (SFAR) :</strong> Maintenir PAM > 65-70 mmHg (éviter toute hypotension > 20% de la baseline) et éviter la tachycardie. Préférer <strong>Étomidate + Sufentanil</strong>. Poursuivre les bêtabloquants.',
+            ar: '❤️ <strong>قصور قلبي / شرايين (SFAR):</strong> الحفاظ على PAM > 65-70 mmHg وتجنب تسرع القلب. يفضل Étomidate + Sufentanil واستمرار حاصرات بيتا.',
+            en: '❤️ <strong>Cardiac / Coronary Disease:</strong> Maintain MAP > 65-70 mmHg, avoid tachycardia. Prefer Etomidate + Sufentanil; continue beta-blockers.',
+            dz: '❤️ <strong>مريض القلب:</strong> حافظ على لاطونسيو PAM > 65-70 وما تخليش قلبو يضرب بالخف. رقدو بـ Étomidate + Sufenta وكمل Bêtabloquants.'
+          }[currentLang]);
+        }
+        if (selectedTerrains.has('saos')) {
+          advices.push({
+            fr: '😴 <strong>SAOS Sévère (SFAR) :</strong> Prévoir intubation difficile, épargne morphinique multimodale (privilégier <strong>Rémifentanil</strong> et ALR), décurarisation complète monitorée (<strong>TOF ≥ 0.9</strong> avant extubation en position semi-assise).',
+            ar: '😴 <strong>انقطاع النفس النومي SAOS (SFAR):</strong> توقع صعوبة التنبيب، تقليل المورفينات، والتأكد من زوال الكورار (TOF ≥ 0.9) قبل نزع الأنبوب بوضعية الجلوس.',
+            en: '😴 <strong>Severe OSA (SFAR):</strong> Anticipate difficult airway, opioid-sparing analgesia, extubate awake in semi-sitting position with TOF ≥ 0.9.',
+            dz: '😴 <strong>عندو SAOS:</strong> وجد ماتريال الإنتوباسيون الصعيب، نقص المورفين، وما تنحيش لاصوند حتى يفطن مليح ويتنحى الكورار كامل (TOF ≥ 0.9).'
+          }[currentLang]);
+        }
+        if (selectedTerrains.has('obstetric')) {
+          advices.push({
+            fr: '🤰 <strong>Obstétrique / Césarienne (SFAR) :</strong> Décubitus latéral gauche 15°, <strong>Phényléphrine</strong> en 1re intention pour l\'hypotension post-rachianesthésie, et <strong>Acide Tranexamique (1g)</strong> si hémorragie.',
+            ar: '🤰 <strong>قيصرية (SFAR):</strong> إمالة لليسار 15°، فينيليفرين لهبوط الضغط، وحمض الترانيكساميك عند النزف.',
+            en: '🤰 <strong>C-Section (SFAR):</strong> 15° left uterine displacement, Phenylephrine 1st-line for hypotension, TXA 1g if bleeding.',
+            dz: '🤰 <strong>سيزاريان:</strong> ميلها لليسار بـ 15 درجة، استعمل Néosynéphrine كي تطيح لاطونسيو، و Exacyl 1g إذا كان نزيف.'
+          }[currentLang]);
+        }
+        if (selectedTerrains.has('htic')) {
+          advices.push({
+            fr: '🧠 <strong>HTIC / Neurochirurgie (SFAR) :</strong> Maintenir PPC (PAM - PIC), normocapnie stricte (EtCO₂ 35-38 mmHg), normothermie, éviter solutés hypotoniques. Préférer <strong>Propofol + Rémifentanil</strong>.',
+            ar: '🧠 <strong>ارتفاع ضغط الدماغ HTIC:</strong> الحفاظ على ضغط التروية الدماغية و EtCO₂ 35-38 mmHg وتجنب المحاليل منخفضة التوتر.',
+            en: '🧠 <strong>Elevated ICP / Neuro:</strong> Maintain CPP, strict normocapnia (EtCO₂ 35-38 mmHg), avoid hypotonic fluids; prefer Propofol + Remifentanil.',
+            dz: '🧠 <strong>ضغط الراس طالع (HTIC):</strong> حافظ على لاطونسيو، خلي EtCO₂ بين 35 و 38، وإياك دير سيروم ناقص ملح.'
+          }[currentLang]);
+        }
+        if (selectedTerrains.has('allergy')) {
+          advices.push({
+            fr: '⚠️ <strong>Terrain Allergique / Risque Anaphylactique (SFAR) :</strong> Éviter les curares histaminolibérateurs (Atracurium) et Suxaméthonium ; préférer <strong>Cisatracurium</strong> ou <strong>Rocuronium</strong>. Avoir <strong>Adrénaline</strong> prête.',
+            ar: '⚠️ <strong>حساسية شديدة:</strong> تجنب الكورار المحرر للهيستامين (Atracurium) ويفضل Cisatracurium مع تجهيز الأدرينالين.',
+            en: '⚠️ <strong>Allergic Terrain:</strong> Avoid histamine-releasing NMBAs (Atracurium); prefer Cisatracurium. Keep Epinephrine ready.',
+            dz: '⚠️ <strong>عندو الحساسية:</strong> ابعد على Tracrium و Célocurine وخدم بـ <strong>Nimbex®</strong> وخلي Adrénaline قدامك.'
+          }[currentLang]);
+        }
+
+        if (advices.length === 0) {
+          advices.push({
+            fr: '✅ <strong>Patient stable sans défaillance d\'organe :</strong> Protocole balancé standard (Propofol + Fentanyl/Sufentanil + Rocuronium + Sévoflurane) avec ventilation protectrice (VT = 7 mL/kg IBW).',
+            ar: '✅ <strong>مريض مستقر:</strong> البروتوكول القياسي المتوازن مناسب تماماً مع التهوية الوقائية.',
+            en: '✅ <strong>Stable Patient:</strong> Standard balanced anesthesia protocol with lung-protective ventilation (VT = 7 mL/kg IBW).',
+            dz: '✅ <strong>المريض سطابل ولاباس بيه:</strong> البروتوكول العادي (Propofol + Fentanyl + Esmeron + Sévorane) يخرج عليه هايل.'
+          }[currentLang]);
+        }
+
+        document.getElementById('clinicalAdviceList').innerHTML = advices.map(a =>
+          `<div class="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/70 border border-teal-100 dark:border-slate-700/60">${a}</div>`
+        ).join('');
+      }
+
+      function updateAirwayAndVentilation(m) {
+        let cuffed = '', uncuffed = '', backup = '', depth = '', guedel = '', guedelColor = '', guedelBg = '', lma = '', blade = '', cuffText = '';
+
+        if (m.ageYears < 16) {
+          if (m.tbw < 1.5) {
+            cuffed = '—'; uncuffed = '2.5 mm'; backup = '± 0.5 mm'; depth = '6.5 - 7 cm';
+            guedel = '000 (35 mm)'; guedelColor = 'Rose (000)'; guedelBg = 'bg-pink-500 text-white';
+            lma = 'ML 1 (< 5 kg)'; blade = 'Miller 00';
+          } else if (m.tbw < 3.0) {
+            cuffed = '—'; uncuffed = '3.0 mm'; backup = '2.5 / 3.5 mm'; depth = '7.5 - 8.5 cm';
+            guedel = '000 (35 mm)'; guedelColor = 'Rose (000)'; guedelBg = 'bg-pink-500 text-white';
+            lma = 'ML 1 (< 5 kg)'; blade = 'Miller 0';
+          } else if (m.ageYears < 1 / 12) {
+            cuffed = '3.0 mm'; uncuffed = '3.5 mm'; backup = '2.5 / 3.5 mm'; depth = '9 - 10 cm';
+            guedel = '00 (40 mm)'; guedelColor = 'Bleu clair (00)'; guedelBg = 'bg-sky-400 text-slate-900';
+            lma = 'ML 1 (< 5 kg)'; blade = 'Miller 0 / 1';
+          } else if (m.ageYears < 0.5) {
+            cuffed = '3.0 - 3.5 mm'; uncuffed = '3.5 - 4.0 mm'; backup = '± 0.5 mm'; depth = '10 - 11 cm';
+            guedel = '0 (50 mm)'; guedelColor = 'Noir (0)'; guedelBg = 'bg-slate-900 text-white';
+            lma = 'ML 1 / 1.5'; blade = 'Miller 1';
+          } else if (m.ageYears < 1) {
+            cuffed = '3.5 mm'; uncuffed = '4.0 mm'; backup = '3.0 / 4.0 mm'; depth = '11 - 12 cm';
+            guedel = '0 (50 mm)'; guedelColor = 'Noir (0)'; guedelBg = 'bg-slate-900 text-white';
+            lma = 'ML 1.5 (5-10 kg)'; blade = 'Miller 1';
+          } else if (m.ageYears < 2) {
+            cuffed = '3.5 - 4.0 mm'; uncuffed = '4.0 - 4.5 mm'; backup = '± 0.5 mm'; depth = '12 - 13 cm';
+            guedel = '1 (60 mm)'; guedelColor = 'Blanc (1)'; guedelBg = 'bg-slate-100 text-slate-900 border border-slate-300';
+            lma = 'ML 2 (10-20 kg)'; blade = 'Macintosh 1 / Miller 1';
+          } else {
+            const rawCuffed = Math.round(((m.ageYears / 4) + 3.5) * 2) / 2;
+            const rawUncuffed = rawCuffed + 0.5;
+            const calcDepth = Math.round((m.ageYears / 2) + 12);
+            cuffed = rawCuffed.toFixed(1) + ' mm';
+            uncuffed = rawUncuffed.toFixed(1) + ' mm';
+            backup = `${(rawCuffed - 0.5).toFixed(1)} / ${(rawCuffed + 0.5).toFixed(1)} mm`;
+            depth = `${calcDepth} cm (Nasal: ${calcDepth + 3} cm)`;
+
+            if (m.ageYears < 3) {
+              guedel = '1 (60 mm)'; guedelColor = 'Blanc (1)'; guedelBg = 'bg-slate-100 text-slate-900 border border-slate-300';
+            } else if (m.ageYears < 8) {
+              guedel = '2 (70 mm)'; guedelColor = 'Vert (2)'; guedelBg = 'bg-emerald-600 text-white';
+            } else {
+              guedel = '3 (80 mm)'; guedelColor = 'Jaune (3)'; guedelBg = 'bg-amber-400 text-slate-900';
+            }
+
+            if (m.tbw < 20) lma = 'ML 2 (10-20 kg)';
+            else if (m.tbw < 30) lma = 'ML 2.5 (20-30 kg)';
+            else lma = 'ML 3 (30-50 kg)';
+
+            blade = m.ageYears < 6 ? 'Macintosh 2' : 'Macintosh 2 / 3';
+          }
+          cuffText = {
+            fr: 'Pédiatrie : Sonde Microcuff recommandée (pression < 20 cmH₂O). Insérer la Guedel concavité vers le bas sans rotation chez le nourrisson.',
+            ar: 'الأطفال: يفضل أنبوب Microcuff بضغط أقل من 20 cmH₂O.',
+            en: 'Pediatrics: Microcuff ETT recommended (cuff pressure < 20 cmH₂O). Insert Guedel without rotation in infants.',
+            dz: 'فالدراري: دير Sonde Microcuff وضغط البالون أقل من 20 cmH₂O. الغيدل دخلها بلا ما تدورها عند البيبي.'
+          }[currentLang];
+        } else {
+          if (m.sex === 'F') {
+            cuffed = '7.0 - 7.5 mm'; backup = '6.5 / 8.0 mm'; depth = '20 - 21 cm';
+            lma = m.ibw < 50 ? 'ML 3' : 'ML 4';
+          } else {
+            cuffed = '7.5 - 8.0 mm'; backup = '7.0 / 8.5 mm'; depth = '22 - 23 cm';
+            lma = m.ibw > 70 ? 'ML 5' : 'ML 4';
+          }
+          uncuffed = '—';
+          if (m.heightCm >= 182) {
+            guedel = '5 (100-110 mm)'; guedelColor = 'Orange (5)'; guedelBg = 'bg-orange-500 text-white';
+            blade = 'Macintosh 4';
+          } else {
+            guedel = '4 (90 mm)'; guedelColor = 'Rouge (4)'; guedelBg = 'bg-red-600 text-white';
+            blade = 'Macintosh 3 / 4';
+          }
+          cuffText = {
+            fr: 'Pression ballonnet maintenue entre 20 et 30 cmH₂O + vérification EtCO₂ et auscultation bilatérale.',
+            ar: 'يحافظ على ضغط البالون بين 20 و 30 cmH₂O + التأكد بـ EtCO₂ والتسمع المتناظر.',
+            en: 'Maintain cuff pressure 20-30 cmH₂O + verify EtCO₂ waveform & bilateral breath sounds.',
+            dz: 'البالون نفخو بين 20 و 30 cmH₂O وشوف الكابنو EtCO₂ واسمع الصدر من الجهتين.'
+          }[currentLang];
+        }
+
+        document.getElementById('ettCuffed').textContent = cuffed;
+        document.getElementById('ettBackup').textContent = `± 0.5 mm : ${backup}`;
+        document.getElementById('ettDepth').textContent = depth;
+        document.getElementById('ettUncuffedNote').textContent = `Sans ballonnet : ${uncuffed}`;
+        document.getElementById('guedelSizeText').textContent = guedel;
+        const gBadge = document.getElementById('guedelColorBadge');
+        gBadge.textContent = guedelColor;
+        gBadge.className = `px-2 py-0.5 rounded text-[11px] font-bold ${guedelBg}`;
+        document.getElementById('lmaSize').textContent = lma;
+        document.getElementById('bladeSize').textContent = blade;
+        document.getElementById('cuffPressureText').textContent = cuffText;
+
+        // Ventilation (Protective on IBW)
+        const vtMin = Math.round(6 * m.ibw);
+        const vtTarget = Math.round(7 * m.ibw);
+        const vtMax = Math.round(8 * m.ibw);
+        document.getElementById('ventVT').textContent = `${vtTarget} mL`;
+        document.getElementById('ventVTRange').textContent = `(${vtMin} - ${vtMax} mL)`;
+
+        let frTarget = 14, frRange = '12 - 16 /min';
+        if (m.isPreterm || m.ageYears < 28 / 365.25) { frTarget = 35; frRange = '30 - 40 /min'; }
+        else if (m.ageYears < 1) { frTarget = 28; frRange = '25 - 35 /min'; }
+        else if (m.ageYears < 5) { frTarget = 22; frRange = '20 - 25 /min'; }
+        else if (m.ageYears < 12) { frTarget = 18; frRange = '15 - 20 /min'; }
+        else if (m.ageYears < 16) { frTarget = 15; frRange = '14 - 18 /min'; }
+        document.getElementById('ventFR').textContent = `${frTarget} c/min`;
+        document.getElementById('ventFRRange').textContent = frRange;
+
+        let pep = 5, pepNote = 'Standard';
+        if (m.ageYears < 1) { pep = 4; pepNote = 'Pédiatrie'; }
+        if (m.isObese) { pep = 8; pepNote = 'Obésité (8-10)'; }
+        if (selectedTerrains.has('asthma')) { pep = 4; pepNote = 'Anti Auto-PEEP'; }
+        document.getElementById('ventPEP').textContent = `${pep} cmH₂O`;
+        document.getElementById('ventPEPNote').textContent = pepNote;
+
+        const ie = selectedTerrains.has('asthma') ? '1 : 3' : '1 : 2';
+        document.getElementById('ventIE').textContent = ie;
+
+        // Fluid Therapy (4-2-1)
+        const fluidW = m.isObese ? m.abw : m.tbw;
+        let hourlyFluid = 0;
+        if (fluidW <= 10) hourlyFluid = fluidW * 4;
+        else if (fluidW <= 20) hourlyFluid = 40 + (fluidW - 10) * 2;
+        else hourlyFluid = 60 + (fluidW - 20) * 1;
+        document.getElementById('fluidRate').textContent = `${Math.round(hourlyFluid)} mL/h`;
+
+        let fluidRec = {
+          fr: 'Soluté recommandé : Cristalloïde isotonique balancé (Ringer Lactate / Isofundine®).',
+          ar: 'المحلول الموصى به: كريستالويد متوازن (Ringer Lactate / Isofundine®).',
+          en: 'Recommended fluid: Balanced isotonic crystalloid (Ringer Lactate / Plasmalyte).',
+          dz: 'السيروم المليح: Ringer Lactate ولا Isofundine® (بلا سكر للكبار).'
+        }[currentLang];
+        if (m.ageYears < 1) {
+          fluidRec = {
+            fr: 'Nourrisson : Cristalloïde isotonique avec glucose 1% (Polyionique B66®) + contrôle glycémie.',
+            ar: 'الرضيع: محلول متوازن مع غلوكوز 1% (Polyionique B66®) مع مراقبة سكر الدم.',
+            en: 'Infant: Balanced crystalloid with 1% glucose + blood glucose monitoring.',
+            dz: 'للبيبي: ديرلو Polyionique B66® (فيه 1% سكر) وعس السكر فالدم.'
+          }[currentLang];
+        }
+        document.getElementById('fluidTypeRec').textContent = fluidRec;
+
+        m.vent = { vtTarget, vtMin, vtMax, frTarget, pep, ie, hourlyFluid: Math.round(hourlyFluid), cuffed, depth, guedel, guedelColor };
+      }
+
+      // =========================================================================
+      // 6. DRUG RENDERING, MAPAR TABLE & PROTOCOL SUMMARY
+      // =========================================================================
+      function formatNum(num) {
+        if (num >= 100) return Math.round(num).toString();
+        if (num >= 10) return num.toFixed(1);
+        return num.toFixed(2);
+      }
+
+      function calculateDrugValues(drug, m) {
+        const weightUsed = getScalarWeight(m, drug.scalar);
+        const doseInfo = drug.getDose(m);
+
+        if (doseInfo.fixedDose) {
+          return {
+            weightUsed, scalar: drug.scalar,
+            doseDisplay: doseInfo.fixedDose,
+            volDisplay: 'Titration / Bolus',
+            note: doseInfo.note || ''
+          };
+        }
+
+        let totalMin = doseInfo.min * weightUsed;
+        let totalMax = doseInfo.max * weightUsed;
+        if (doseInfo.cap) {
+          totalMin = Math.min(totalMin, doseInfo.cap);
+          totalMax = Math.min(totalMax, doseInfo.cap);
+        }
+
+        const volMin = totalMin / drug.conc;
+        const volMax = totalMax / drug.conc;
+        const isSingle = Math.abs(totalMin - totalMax) < 0.01;
+
+        const doseDisplay = isSingle
+          ? `${formatNum(totalMin)} ${drug.unit}`
+          : `${formatNum(totalMin)} – ${formatNum(totalMax)} ${drug.unit}`;
+
+        const volUnit = drug.isInfusion ? 'mL/h' : 'mL';
+        const volDisplay = isSingle
+          ? `${formatNum(volMin)} ${volUnit}`
+          : `${formatNum(volMin)} – ${formatNum(volMax)} ${volUnit}`;
+
+        return { weightUsed, scalar: drug.scalar, doseDisplay, volDisplay, note: doseInfo.note || '' };
+      }
+
+      function renderStandardDrugGrid(containerId, drugsList, m) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const scalarColors = {
+          'TBW': 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200',
+          'IBW': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200',
+          'LBW': 'bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-200',
+          'ABW': 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200'
+        };
+
+        container.innerHTML = drugsList.map(drug => {
+          const calc = calculateDrugValues(drug, m);
+          const isChecked = selectedDrugs.has(drug.id);
+          const natureText = typeof drug.nature === 'object' ? (drug.nature[currentLang] || drug.nature.fr) : drug.nature;
+
+          return `
+            <div data-drug-id="${drug.id}"
+              class="drug-card cursor-pointer rounded-2xl p-4 border-2 transition-all duration-150 flex flex-col justify-between select-none
+              ${isChecked
+                ? 'border-teal-600 bg-teal-50/40 dark:bg-teal-950/30 shadow-sm'
+                : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'}">
+              <div>
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <input type="checkbox" ${isChecked ? 'checked' : ''} data-drug-id="${drug.id}"
+                        class="drug-checkbox w-4 h-4 accent-teal-600 rounded cursor-pointer" />
+                      <h4 class="font-extrabold text-base text-slate-900 dark:text-white">${drug.dci}</h4>
+                    </div>
+                    <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">${drug.brands}</div>
+                  </div>
+                  <span class="px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold shrink-0 ltr-num ${scalarColors[calc.scalar] || 'bg-slate-200'}">
+                    ${calc.scalar}: ${calc.weightUsed.toFixed(1)}kg
+                  </span>
+                </div>
+
+                <div class="mt-2 text-[11px] text-slate-600 dark:text-slate-300 bg-white/80 dark:bg-slate-800/70 px-2.5 py-1 rounded-lg border border-slate-200/60 dark:border-slate-700/60">
+                  <span class="font-bold">${t('natureLbl')}</span> ${natureText}
+                </div>
+              </div>
+
+              <div class="mt-3 pt-2.5 border-t border-slate-200/70 dark:border-slate-800">
+                <div class="flex items-center justify-between gap-2">
+                  <div>
+                    <div class="text-[10px] font-bold text-slate-400">${t('doseCalcLbl')}</div>
+                    <div class="text-sm font-extrabold text-teal-800 dark:text-teal-300 ltr-num">${calc.doseDisplay}</div>
+                  </div>
+                  <div class="text-end">
+                    <div class="text-[10px] font-bold text-slate-400">${t('volCalcLbl')} (${drug.concLabel})</div>
+                    <div class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white bg-white dark:bg-slate-800 px-2.5 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700 ltr-num">
+                      ${calc.volDisplay}
+                    </div>
+                  </div>
+                </div>
+                ${calc.note ? `<div class="mt-2 text-[11px] leading-snug text-amber-800 dark:text-amber-300 font-medium">${calc.note}</div>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function renderVolatilesGrid(m) {
+        const container = document.getElementById('grid-maint-volatiles');
+        if (!container) return;
+        const factor = Math.pow(10, -0.00269 * (Math.max(0.5, m.ageYears) - 40));
+
+        container.innerHTML = DRUG_CATALOG.maintVolatiles.map(gas => {
+          const isN2O = gas.id === 'n2o_maint';
+          const mac1 = isN2O ? '50 - 70' : (gas.baseMac40 * factor).toFixed(2);
+          const mac08 = isN2O ? '50 (Kalinox)' : (gas.baseMac40 * factor * 0.8).toFixed(2);
+          const isChecked = selectedDrugs.has(gas.id);
+          const natureText = typeof gas.nature === 'object' ? (gas.nature[currentLang] || gas.nature.fr) : gas.nature;
+          const noteText = typeof gas.note === 'object' ? (gas.note[currentLang] || gas.note.fr) : gas.note;
+
+          return `
+            <div data-drug-id="${gas.id}"
+              class="drug-card cursor-pointer rounded-2xl p-4 border-2 transition-all duration-150 flex flex-col justify-between select-none
+              ${isChecked
+                ? 'border-cyan-600 bg-cyan-50/40 dark:bg-cyan-950/30 shadow-sm'
+                : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 hover:border-slate-300'}">
+              <div>
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <input type="checkbox" ${isChecked ? 'checked' : ''} data-drug-id="${gas.id}"
+                        class="drug-checkbox w-4 h-4 accent-cyan-600 rounded cursor-pointer" />
+                      <h4 class="font-extrabold text-base text-slate-900 dark:text-white">${gas.dci}</h4>
+                    </div>
+                    <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">${gas.brands}</div>
+                  </div>
+                  <span class="px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold bg-cyan-100 text-cyan-800 dark:bg-cyan-900/60 dark:text-cyan-200">
+                    MAC Mapleson
+                  </span>
+                </div>
+                <div class="mt-2 text-[11px] text-slate-600 dark:text-slate-300">${natureText}</div>
+              </div>
+
+              <div class="mt-3 pt-2.5 border-t border-slate-200/70 dark:border-slate-800">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-[10px] font-bold text-slate-400">${isN2O ? 'FiN₂O usuelle' : t('mac1Lbl')}</div>
+                    <div class="text-lg font-extrabold text-cyan-800 dark:text-cyan-300 ltr-num">${mac1} %</div>
+                  </div>
+                  <div class="text-end">
+                    <div class="text-[10px] font-bold text-slate-400">${isN2O ? 'Mélange équimolaire' : t('mac08Lbl')}</div>
+                    <div class="text-lg font-extrabold text-slate-900 dark:text-white ltr-num">${mac08} %</div>
+                  </div>
+                </div>
+                <div class="mt-2 text-[11px] text-slate-600 dark:text-slate-400">${noteText}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function renderMaparTable() {
+        const tbody = document.getElementById('maparTableBody');
+        if (!tbody) return;
+        const query = (document.getElementById('maparSearchInput')?.value || '').toLowerCase().trim();
+
+        const filtered = MAPAR_PREOP_DATA.filter(row => {
+          const matchCat = currentMaparCat === 'all' || row.cat === currentMaparCat;
+          const matchText = !query ||
+            row.classLabel.toLowerCase().includes(query) ||
+            row.drug.toLowerCase().includes(query) ||
+            row.stop.toLowerCase().includes(query) ||
+            row.catText.toLowerCase().includes(query);
+          return matchCat && matchText;
+        });
+
+        tbody.innerHTML = filtered.map(row => `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+            <td class="p-3 font-bold text-slate-900 dark:text-white align-top">${row.classLabel}</td>
+            <td class="p-3 font-semibold text-teal-800 dark:text-teal-300 align-top">${row.drug}</td>
+            <td class="p-3 font-bold text-rose-700 dark:text-rose-400 align-top">${row.stop}</td>
+            <td class="p-3 text-slate-700 dark:text-slate-300 align-top leading-relaxed">${row.catText}</td>
+          </tr>
+        `).join('');
+      }
+
+      function generateProtocolSummary(m) {
+        const allLists = [
+          { title: t('tabInd'), items: [...DRUG_CATALOG.indHypnotics, ...DRUG_CATALOG.indOpioids, ...DRUG_CATALOG.indCurares] },
+          { title: t('tabMaint'), items: DRUG_CATALOG.maintIV, volatiles: DRUG_CATALOG.maintVolatiles },
+          { title: t('tabLocal'), items: DRUG_CATALOG.localAnesthetics },
+          { title: t('tabEmerg'), items: [...DRUG_CATALOG.emergCardio, ...DRUG_CATALOG.emergAntidotes, ...DRUG_CATALOG.emergOther] }
+        ];
+
+        const unitMap = { years: t('unitYears'), months: t('unitMonths'), days: t('unitDays'), weeks_ga: t('unitWeeks') };
+        let sectionsHtml = `
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+            <div>
+              <span class="text-xs text-slate-500 dark:text-slate-400 block">${t('sumPatient')} :</span>
+              <strong class="text-slate-900 dark:text-white">${m.ageRaw} ${unitMap[m.ageUnit]} | ${m.sex} | ${m.heightCm} cm</strong>
+            </div>
+            <div>
+              <span class="text-xs text-slate-500 dark:text-slate-400 block">${t('sumWeights')} :</span>
+              <strong class="ltr-num text-xs text-slate-900 dark:text-white">TBW:${m.tbw.toFixed(1)} | IBW:${m.ibw.toFixed(1)} | LBW:${m.lbw.toFixed(1)} | ABW:${m.abw.toFixed(1)}</strong>
+            </div>
+            <div>
+              <span class="text-xs text-slate-500 dark:text-slate-400 block">${t('sumAirway')} :</span>
+              <strong class="text-slate-900 dark:text-white">ETT ${m.vent.cuffed} (${m.vent.depth}) | ${m.vent.guedelColor}</strong>
+            </div>
+            <div>
+              <span class="text-xs text-slate-500 dark:text-slate-400 block">${t('sumVent')} :</span>
+              <strong class="ltr-num text-slate-900 dark:text-white">VT:${m.vent.vtTarget}mL | FR:${m.vent.frTarget} | PEP:${m.vent.pep} | ${m.vent.hourlyFluid}mL/h</strong>
+            </div>
+          </div>
+        `;
+
+        allLists.forEach(group => {
+          const rows = [];
+          if (group.volatiles) {
+            const factor = Math.pow(10, -0.00269 * (Math.max(0.5, m.ageYears) - 40));
+            group.volatiles.forEach(gas => {
+              if (selectedDrugs.has(gas.id)) {
+                const isN2O = gas.id === 'n2o_maint';
+                const mac1 = isN2O ? '50-70%' : `${(gas.baseMac40 * factor).toFixed(2)}%`;
+                const mac08 = isN2O ? 'Kalinox 50%' : `${(gas.baseMac40 * factor * 0.8).toFixed(2)}%`;
+                rows.push(`
+                  <tr class="border-b border-slate-100 dark:border-slate-800">
+                    <td class="py-2 font-bold text-slate-900 dark:text-white">${gas.dci} <span class="text-xs font-normal text-slate-500">(${gas.brands})</span></td>
+                    <td class="py-2 font-mono text-xs text-cyan-700 dark:text-cyan-300">MAC (Âge)</td>
+                    <td class="py-2 font-bold text-teal-800 dark:text-teal-300 ltr-num">1.0 MAC: ${mac1}</td>
+                    <td class="py-2 font-extrabold text-slate-900 dark:text-white ltr-num">0.8 MAC: ${mac08}</td>
+                  </tr>
+                `);
+              }
+            });
+          }
+
+          group.items.forEach(drug => {
+            if (selectedDrugs.has(drug.id)) {
+              const calc = calculateDrugValues(drug, m);
+              rows.push(`
+                <tr class="border-b border-slate-100 dark:border-slate-800">
+                  <td class="py-2 font-bold text-slate-900 dark:text-white">${drug.dci} <span class="text-xs font-normal text-slate-500">(${drug.brands})</span></td>
+                  <td class="py-2 font-mono text-xs text-slate-600 dark:text-slate-400 ltr-num">${calc.scalar} (${calc.weightUsed.toFixed(1)}kg)</td>
+                  <td class="py-2 font-bold text-teal-800 dark:text-teal-300 ltr-num">${calc.doseDisplay}</td>
+                  <td class="py-2 font-extrabold text-slate-900 dark:text-white ltr-num">${calc.volDisplay} <span class="text-[11px] font-normal text-slate-500">(${drug.concLabel})</span></td>
+                </tr>
+              `);
+            }
+          });
+
+          if (rows.length > 0) {
+            sectionsHtml += `
+              <div class="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div class="bg-slate-50 dark:bg-slate-800/60 px-3.5 py-2 font-extrabold text-xs text-teal-800 dark:text-teal-300 uppercase tracking-wide">
+                  ${group.title}
+                </div>
+                <div class="overflow-x-auto px-3.5">
+                  <table class="w-full text-start border-collapse">
+                    <tbody>${rows.join('')}</tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+          }
+        });
+
+        document.getElementById('protocolSummaryContainer').innerHTML = sectionsHtml;
+      }
+
+      function switchTab(tabName) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+        const panel = document.getElementById(`panel-${tabName}`);
+        if (panel) panel.classList.remove('hidden');
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          const isMatch = btn.getAttribute('data-tab') === tabName;
+          btn.className = isMatch
+            ? 'tab-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-600 text-white shadow-sm transition cursor-pointer'
+            : 'tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer';
+        });
+      }
+
+      function copyTextSafe(text, successMsg) {
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(() => {
+            showToast(successMsg);
+          }).catch(() => {
+            fallbackCopy(text, successMsg);
+          });
+        } else {
+          fallbackCopy(text, successMsg);
+        }
+      }
+
+      function fallbackCopy(text, successMsg) {
+        const tempArea = document.createElement('textarea');
+        tempArea.value = text;
+        tempArea.style.position = 'fixed';
+        tempArea.style.opacity = '0';
+        document.body.appendChild(tempArea);
+        tempArea.focus();
+        tempArea.select();
+        try {
+          document.execCommand('copy');
+          showToast(successMsg);
+        } catch (err) {
+          showToast('Copie effectuée');
+        }
+        document.body.removeChild(tempArea);
+      }
+
+      function copyProtocolText() {
+        const m = currentMetrics;
+        const unitMap = { years: t('unitYears'), months: t('unitMonths'), days: t('unitDays'), weeks_ga: t('unitWeeks') };
+        let text = `=== ${t('sec5Title')} ===\n`;
+        text += `${t('sumPatient')}: ${m.ageRaw} ${unitMap[m.ageUnit]} | ${m.sex} | ${m.heightCm} cm\n`;
+        text += `${t('sumWeights')}: TBW=${m.tbw.toFixed(1)}kg | IBW=${m.ibw.toFixed(1)}kg | LBW=${m.lbw.toFixed(1)}kg | ABW=${m.abw.toFixed(1)}kg (IMC: ${m.bmi.toFixed(1)})\n`;
+        text += `${t('sumAirway')}: ETT ${m.vent.cuffed} (${m.vent.depth}) | Guedel ${m.vent.guedelColor}\n`;
+        text += `${t('sumVent')}: VT=${m.vent.vtTarget} mL (${m.vent.vtMin}-${m.vent.vtMax}) | FR=${m.vent.frTarget}/min | PEP=${m.vent.pep} cmH2O | I:E=${m.vent.ie} | ${m.vent.hourlyFluid} mL/h\n\n`;
+
+        const allDrugs = [
+          ...DRUG_CATALOG.indHypnotics, ...DRUG_CATALOG.indOpioids, ...DRUG_CATALOG.indCurares,
+          ...DRUG_CATALOG.maintIV, ...DRUG_CATALOG.localAnesthetics,
+          ...DRUG_CATALOG.emergCardio, ...DRUG_CATALOG.emergAntidotes, ...DRUG_CATALOG.emergOther
+        ];
+
+        DRUG_CATALOG.maintVolatiles.forEach(gas => {
+          if (selectedDrugs.has(gas.id)) {
+            const factor = Math.pow(10, -0.00269 * (Math.max(0.5, m.ageYears) - 40));
+            text += `• ${gas.dci} (${gas.brands}): 1.0 MAC = ${(gas.baseMac40 * factor).toFixed(2)}% | 0.8 MAC = ${(gas.baseMac40 * factor * 0.8).toFixed(2)}%\n`;
+          }
+        });
+
+        allDrugs.forEach(drug => {
+          if (selectedDrugs.has(drug.id)) {
+            const calc = calculateDrugValues(drug, m);
+            text += `• ${drug.dci} (${drug.brands}) [${calc.scalar}]: ${calc.doseDisplay} -> ${calc.volDisplay} (${drug.concLabel})\n`;
+          }
+        });
+
+        copyTextSafe(text, t('toastCopied'));
+      }
+
+      function recalculateAll() {
+        renderTerrainPills();
+        const m = calculateMetrics();
+        currentMetrics = m;
+
+        updateWeightsAndAdvice(m);
+        updateAirwayAndVentilation(m);
+
+        renderStandardDrugGrid('grid-ind-hypnotics', DRUG_CATALOG.indHypnotics, m);
+        renderStandardDrugGrid('grid-ind-opioids', DRUG_CATALOG.indOpioids, m);
+        renderStandardDrugGrid('grid-ind-curares', DRUG_CATALOG.indCurares, m);
+
+        renderVolatilesGrid(m);
+        renderStandardDrugGrid('grid-maint-iv', DRUG_CATALOG.maintIV, m);
+
+        renderStandardDrugGrid('grid-local-anesthetics', DRUG_CATALOG.localAnesthetics, m);
+
+        renderStandardDrugGrid('grid-emerg-cardio', DRUG_CATALOG.emergCardio, m);
+        renderStandardDrugGrid('grid-emerg-antidotes', DRUG_CATALOG.emergAntidotes, m);
+        renderStandardDrugGrid('grid-emerg-other', DRUG_CATALOG.emergOther, m);
+
+        generateProtocolSummary(m);
+      }
+
+      // =========================================================================
+      // 7. UNIFIED DELEGATED EVENT LISTENERS (100% RELIABLE BUTTONS & INPUTS)
+      // =========================================================================
+      function initEventListeners() {
+        // Global Click Delegation
+        document.addEventListener('click', function (e) {
+          // 1. Language Switcher
+          const langBtn = e.target.closest('.lang-btn');
+          if (langBtn) {
+            const lang = langBtn.getAttribute('data-lang');
+            if (lang) setLanguage(lang);
+            return;
+          }
+
+          // 2. Quick Patient Presets
+          const presetBtn = e.target.closest('[data-preset]');
+          if (presetBtn) {
+            const preset = presetBtn.getAttribute('data-preset');
+            if (preset) applyPreset(preset);
+            return;
+          }
+
+          // 3. Terrain Toggle Pills
+          const terrainBtn = e.target.closest('.terrain-pill-btn');
+          if (terrainBtn) {
+            const tid = terrainBtn.getAttribute('data-terrain');
+            if (tid) {
+              if (selectedTerrains.has(tid)) selectedTerrains.delete(tid);
+              else selectedTerrains.add(tid);
+              recalculateAll();
+            }
+            return;
+          }
+
+          // 4. Drug Tabs
+          const tabBtn = e.target.closest('.tab-btn');
+          if (tabBtn) {
+            const tab = tabBtn.getAttribute('data-tab');
+            if (tab) switchTab(tab);
+            return;
+          }
+
+          // 5. Drug Card or Checkbox Selection
+          const drugCheckbox = e.target.closest('.drug-checkbox');
+          const drugCard = e.target.closest('.drug-card');
+          if (drugCheckbox || drugCard) {
+            const drugId = (drugCheckbox || drugCard).getAttribute('data-drug-id');
+            if (drugId) {
+              if (selectedDrugs.has(drugId)) selectedDrugs.delete(drugId);
+              else selectedDrugs.add(drugId);
+              recalculateAll();
+            }
+            return;
+          }
+
+          // 6. MAPAR Category Filter Pills
+          const maparCatBtn = e.target.closest('.mapar-cat-btn');
+          if (maparCatBtn) {
+            currentMaparCat = maparCatBtn.getAttribute('data-mapar-cat') || 'all';
+            document.querySelectorAll('.mapar-cat-btn').forEach(b => {
+              const active = b.getAttribute('data-mapar-cat') === currentMaparCat;
+              b.className = active
+                ? 'mapar-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-slate-950 shadow-sm cursor-pointer'
+                : 'mapar-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 cursor-pointer';
+            });
+            renderMaparTable();
+            return;
+          }
+
+          // 7. Generic Data Actions (Modals, Theme, Copy, Print, Clear)
+          const actionBtn = e.target.closest('[data-action]');
+          if (actionBtn) {
+            const action = actionBtn.getAttribute('data-action');
+            const modalId = actionBtn.getAttribute('data-modal');
+
+            if (action === 'open-modal' && modalId) openModal(modalId);
+            else if (action === 'close-modal' && modalId) closeModal(modalId);
+            else if (action === 'toggle-theme') document.documentElement.classList.toggle('dark');
+            else if (action === 'clear-terrains') { selectedTerrains.clear(); recalculateAll(); }
+            else if (action === 'select-default-drugs') {
+              selectedDrugs.clear();
+              DEFAULT_DRUGS.forEach(d => selectedDrugs.add(d));
+              recalculateAll();
+            } else if (action === 'clear-all-drugs') {
+              selectedDrugs.clear();
+              recalculateAll();
+            } else if (action === 'copy-protocol') copyProtocolText();
+            else if (action === 'print-protocol') window.print();
+            else if (action === 'copy-email') copyTextSafe('gtafandz@gmail.com', 'Email copié : gtafandz@gmail.com');
+            return;
+          }
+
+          // 8. Backdrop Click to Close Modal
+          const backdropId = e.target.getAttribute('data-backdrop');
+          if (backdropId) {
+            closeModal(backdropId);
+          }
+        });
+
+        // Input & Change Listeners for Patient Form & Search
+        ['ageValue', 'actualWeight', 'heightCm'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.addEventListener('input', recalculateAll);
+        });
+
+        const ageUnitEl = document.getElementById('ageUnit');
+        if (ageUnitEl) ageUnitEl.addEventListener('change', handleAgeUnitChange);
+
+        ['renalStatus', 'hepaticStatus'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.addEventListener('change', recalculateAll);
+        });
+
+        document.querySelectorAll('input[name="sex"]').forEach(radio => {
+          radio.addEventListener('change', recalculateAll);
+        });
+
+        const maparSearch = document.getElementById('maparSearchInput');
+        if (maparSearch) maparSearch.addEventListener('input', renderMaparTable);
+
+        // Escape key closes open modals
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') {
+            closeModal('maparModal');
+            closeModal('aboutModal');
+          }
+        });
+      }
+
+      // Initialize cleanly on DOM ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+          initEventListeners();
+          setLanguage('fr');
+        });
+      } else {
+        initEventListeners();
+        setLanguage('fr');
+      }
+    })();
+  </script>
+
+  <script>
+    // PWA offline support. The calculator itself is left unchanged.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('./service-worker.js').catch(function (err) {
+          console.warn('PWA offline setup failed:', err);
+        });
+      });
+    }
+  </script>
+\n</body>
+</html>
